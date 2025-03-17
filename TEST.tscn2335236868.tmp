@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://6l1odwpi70sd"]
+
+[ext_resource type="Script" uid="uid://dnegdcvt7nhdm" path="res://TESTPLAYER.gd" id="1_7vw07"]
+[ext_resource type="PackedScene" uid="uid://ywlolxfs5wat" path="res://Scenes/HollowedPickaxe.tscn" id="2_cd2k1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_naebt"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="."]
+script = ExtResource("1_7vw07")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
+shape = SubResource("RectangleShape2D_naebt")
+
+[node name="HollowedPickaxe" parent="." instance=ExtResource("2_cd2k1")]
+position = Vector2(-14, 14)

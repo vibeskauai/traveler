@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://fahiinq63qr5"
+path="res://.godot/imported/rock breaking.mp3-1824ff946a2692c9c200ba433108037c.mp3str"
+
+[deps]
+
+source_file="res://Sound Effects/rock breaking.mp3"
+dest_files=["res://.godot/imported/rock breaking.mp3-1824ff946a2692c9c200ba433108037c.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -1,0 +1,79 @@
+[gd_scene load_steps=8 format=3 uid="uid://bq45ki5t54ivj"]
+
+[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/Ore.gd" id="1_0p3v3"]
+[ext_resource type="Texture2D" uid="uid://c5c5cr23le83j" path="res://Assets/Ore Nodes/SilverNode.png" id="2_a53wk"]
+[ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_iwcwv"]
+[ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_5hmov"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qc5p7"]
+size = Vector2(27.845, 13)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wn22y"]
+radius = 15.0333
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_cei1e"]
+a = Vector2(-1.3284, -7.98613)
+b = Vector2(14.0328, 6.61111)
+
+[node name="SilverOre" type="StaticBody2D" groups=["ores"]]
+z_index = -1
+scale = Vector2(0.72, 0.72)
+collision_layer = 2
+script = ExtResource("1_0p3v3")
+ore_type = "silver_ore"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(-1, -2)
+scale = Vector2(1.17125, 1.17125)
+texture = ExtResource("2_a53wk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(-0.344328, 5.5)
+scale = Vector2(1.17395, 1.02664)
+shape = SubResource("RectangleShape2D_qc5p7")
+
+[node name="Hitbox" type="Area2D" parent="."]
+position = Vector2(-11, 3)
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(11, -3)
+scale = Vector2(0.843122, 0.737933)
+shape = SubResource("CircleShape2D_wn22y")
+
+[node name="PopUpLabel" type="Label" parent="."]
+visible = false
+z_index = 2
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -8.0
+offset_right = -19.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.891291, 4.18738e-06, 8.66354e-07, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="HitSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_iwcwv")
+volume_db = -2.0
+
+[node name="BreakSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_5hmov")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="."]
+position = Vector2(1.245, -8)
+scale = Vector2(0.937215, 1.08521)
+shape = SubResource("SegmentShape2D_cei1e")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="."]
+position = Vector2(-6.52, -0.67)
+rotation = 4.59196
+scale = Vector2(1.00604, 0.989538)
+shape = SubResource("SegmentShape2D_cei1e")

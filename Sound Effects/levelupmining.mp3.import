@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://by0je44s6k8xk"
+path="res://.godot/imported/levelupmining.mp3-bb7ef2ec2a799aba429b28901c1a288f.mp3str"
+
+[deps]
+
+source_file="res://Sound Effects/levelupmining.mp3"
+dest_files=["res://.godot/imported/levelupmining.mp3-bb7ef2ec2a799aba429b28901c1a288f.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

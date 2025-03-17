@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://ywlolxfs5wat"]
+
+[ext_resource type="Texture2D" uid="uid://h21aclfiopn4" path="res://Assets/Pickaxes/hollowed_pickaxe.png" id="1_jmnbd"]
+[ext_resource type="Script" uid="uid://5e7xw8s47ilj" path="res://Scripts/ItemPickup.gd" id="1_yw5j6"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yw5j6"]
+
+[node name="HollowedPickaxe" type="Area2D" groups=["pickups"]]
+scale = Vector2(0.684223, 0.684223)
+collision_layer = 2
+script = ExtResource("1_yw5j6")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_jmnbd")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_yw5j6")

@@ -1,0 +1,51 @@
+[gd_scene load_steps=7 format=3 uid="uid://c6tugwkce6af2"]
+
+[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/Ore.gd" id="1_qp5p3"]
+[ext_resource type="Texture2D" uid="uid://c8uqcx1yqlnat" path="res://Assets/Ore Nodes/RuneNode.png" id="2_u3xix"]
+[ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_ymixr"]
+[ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_0ne7w"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pjty1"]
+radius = 13.1529
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wn22y"]
+radius = 15.0333
+
+[node name="RuneOre" type="StaticBody2D"]
+z_index = -1
+collision_layer = 2
+script = ExtResource("1_qp5p3")
+ore_type = "rune_ore"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.53, 1.53)
+texture = ExtResource("2_u3xix")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_pjty1")
+
+[node name="Hitbox" type="Area2D" parent="."]
+position = Vector2(-11, 3)
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(11, -3)
+shape = SubResource("CircleShape2D_wn22y")
+
+[node name="PopUpLabel" type="Label" parent="."]
+visible = false
+offset_left = -20.0
+offset_top = -7.0
+offset_right = 20.0
+offset_bottom = 9.0
+theme_override_colors/font_color = Color(0.891291, 4.18738e-06, 8.66354e-07, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="HitSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_ymixr")
+volume_db = -2.0
+
+[node name="BreakSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_0ne7w")

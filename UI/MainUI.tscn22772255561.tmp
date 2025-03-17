@@ -1,0 +1,105 @@
+[gd_scene load_steps=8 format=3 uid="uid://bkyafsedfg2ii"]
+
+[ext_resource type="Texture2D" uid="uid://dxhywro0k422l" path="res://UI/stone_background.png" id="1_fdbdo"]
+[ext_resource type="Script" uid="uid://0n3hhc3lhkrn" path="res://Scripts/inventory.gd" id="1_xh0hd"]
+[ext_resource type="Script" uid="uid://b32pvh2nnofhh" path="res://Scripts/inventory_button.gd" id="1_yd0xa"]
+[ext_resource type="Texture2D" uid="uid://3kolcmjo5hgt" path="res://UI/backpack icon.png" id="2_wa2eh"]
+[ext_resource type="Texture2D" uid="uid://dls2am2x0trxc" path="res://UI/Stats Icon.png" id="5_8cqdv"]
+[ext_resource type="Texture2D" uid="uid://cfqb8ws5bdeb3" path="res://UI/armour weapon icon.png" id="6_475mu"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_44ib0"]
+texture = ExtResource("1_fdbdo")
+
+[node name="MainUI" type="CanvasLayer"]
+
+[node name="InventoryPanel" type="Panel" parent="."]
+custom_minimum_size = Vector2(300, 400)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -334.0
+offset_top = -438.0
+offset_right = -34.0
+offset_bottom = -38.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxTexture_44ib0")
+script = ExtResource("1_xh0hd")
+
+[node name="Inventory" type="Panel" parent="InventoryPanel"]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="GridContainer" type="GridContainer" parent="InventoryPanel"]
+layout_mode = 0
+offset_right = 212.0
+offset_bottom = 199.0
+
+[node name="InventoryButton" type="Button" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -332.0
+offset_top = -514.0
+offset_right = -264.0
+offset_bottom = -446.0
+grow_horizontal = 0
+grow_vertical = 0
+toggle_mode = true
+icon = ExtResource("2_wa2eh")
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("1_yd0xa")
+
+[node name="SkillsButton" type="Button" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -514.0
+offset_right = -152.0
+offset_bottom = -446.0
+grow_horizontal = 0
+grow_vertical = 0
+icon = ExtResource("5_8cqdv")
+icon_alignment = 1
+expand_icon = true
+
+[node name="ArmorButton" type="Button" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -107.0
+offset_top = -513.0
+offset_right = -39.0
+offset_bottom = -445.0
+grow_horizontal = 0
+grow_vertical = 0
+icon = ExtResource("6_475mu")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Skills" type="Panel" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 31.0
+offset_bottom = 31.0
+
+[node name="Armor" type="Panel" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 31.0
+offset_bottom = 31.0

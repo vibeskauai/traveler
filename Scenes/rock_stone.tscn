@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://dcsjpr6ilrvis"]
+
+[ext_resource type="Texture2D" uid="uid://dobkarvaj7ijl" path="res://Art/Objects/Grass/rock_large1.png" id="1_5cf0d"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4vmc7"]
+size = Vector2(30, 31)
+
+[node name="RockWall" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.545, 0.545)
+texture = ExtResource("1_5cf0d")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Sprite2D"]
+z_index = -1
+collision_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sprite2D/StaticBody2D"]
+position = Vector2(0, -2.5)
+shape = SubResource("RectangleShape2D_4vmc7")

@@ -22,23 +22,37 @@ var last_position: Vector2 = Vector2(0, 0)  # Store last position to detect chan
 var is_swinging = false
 
 func _ready():
-	
-	call_deferred("apply_loaded_facing_direction")
-	GlobalState.last_facing_direction = Vector2(-1, 0)  # Force left
-	# Load game data and set initial position
-	global_state.load_game_data()  # Load game data on ready
-	self.position = global_state.player_position  # Set initial position to the one stored in GlobalState
-	
-	apply_loaded_facing_direction()
-	# Store the initial position to track changes
-	last_position = self.position
+	print("Player ready. Checking GlobalState position:", GlobalState.player_position)
+
+	# ✅ Ensure proper player positioning on load
+	if GlobalState.is_new_game:
+		print("🆕 New game detected! Setting player position to:", GlobalState.player_position)
+		self.position = GlobalState.player_position
+	else:
+		print("📂 Loading saved data...")
+		global_state.load_game_data()
+		self.position = global_state.player_position  # Load the saved position
+
+	print("✅ Final player position after setup:", self.position)
+
+	# ✅ Ensure Last Facing Direction is Loaded Before Use
+	if GlobalState.last_facing_direction == Vector2.ZERO:
+		print("⚠️ No saved facing direction found. Defaulting to left.")
+		GlobalState.last_facing_direction = Vector2(-1, 0)  # Default to left
+	else:
+		print("↔️ Loaded last facing direction:", GlobalState.last_facing_direction)
+
+	# ✅ APPLY THE LOADED FACING DIRECTION **AFTER** LOADING EVERYTHING
 	call_deferred("apply_loaded_facing_direction")
 
-	# Connect signals from interactable items (generic pickup items)
-	var items = get_tree().get_nodes_in_group("pickups")  # Ensure your items are added to the "pickups" group
+	# ✅ Store initial position to track movement changes
+	last_position = self.position
+
+	# ✅ Connect signals for interactable items (e.g., pickups)
+	var items = get_tree().get_nodes_in_group("pickups")
 	for item in items:
-		# Connect the picked_up signal using Callable
-		item.connect("picked_up", Callable(self, "_on_item_picked_up")) 
+		item.connect("picked_up", Callable(self, "_on_item_picked_up"))
+
 
 func _process(delta):
 	if "pickaxe" in player_stats.equipped_items and player_stats.equipped_items["pickaxe"] != null:
@@ -138,17 +152,26 @@ func _process(delta):
 	move_and_slide()
 	sync_player_position()
 
+func _on_new_game_started(new_position: Vector2):
+	global_position = new_position
 
 # Function to sync the player's position with GlobalState
 func sync_player_position():
-	# Update the player's position in GlobalState
-	global_state.player_position = position  # Update with the correct position
-	global_state.save_all_data()  # Ensure that the position is saved along with other game data
+	if GlobalState.is_new_game:
+		return  # Prevents saving old position after a new game is started!
+
+	GlobalState.player_position = position
+	GlobalState.save_all_data()
 
 # Save player position and other necessary game data
 func save_player_position():
-	GlobalState.player_position = position  # Update the position in GlobalState
-	GlobalState.save_all_data()  # Save all data including the player's position
+	if GlobalState.is_new_game:
+		print("Skipping save_player_position() - new game in progress.")
+		return  # Prevents overwriting the new game position
+
+	GlobalState.player_position = position
+	GlobalState.save_all_data()
+
 
 # Function to perform the swing animation
 func perform_swing():
@@ -314,12 +337,21 @@ func _on_item_button_pressed(item_name: String) -> void:
 
 
 func update_pickaxe_visibility():
-	if "pickaxe" in player_stats.equipped_items and player_stats.equipped_items["pickaxe"] != null:
+	var equipped_weapon = GlobalState.equipped_items.get("weapon", null)
+
+	# ✅ **Check if the weapon slot has a pickaxe**
+	if equipped_weapon and GlobalState.get_item_type(equipped_weapon) == "pickaxe":
 		pickaxe_sprite.visible = true
-		pickaxe_sprite.texture = load("res://assets/items/" + player_stats.equipped_items["pickaxe"] + ".png")
+		pickaxe_sprite.texture = load("res://assets/items/" + equipped_weapon + ".png")
 	else:
 		pickaxe_sprite.visible = false
 		pickaxe_sprite.texture = null
+
+	# ✅ **Ensure UI & Inventory Refreshes Immediately**
+	var inventory_panel = get_tree().get_first_node_in_group("inventory_ui")
+	if inventory_panel:
+		inventory_panel.update_inventory_ui()
+
 
 
 func _on_item_picked_up(item_name: String, item_type: String):
@@ -391,7 +423,6 @@ func apply_loaded_facing_direction():
 	
 	var new_anim = ""
 	if d == Vector2.ZERO:
-		print("Facing direction is ZERO. Defaulting to walk_down")
 		new_anim = "walk_down"
 	else:
 		if abs(d.x) > abs(d.y):

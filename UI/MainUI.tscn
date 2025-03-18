@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bkyafsedfg2ii"]
+[gd_scene load_steps=14 format=3 uid="uid://bkyafsedfg2ii"]
 
 [ext_resource type="Script" uid="uid://cl1tyncrmrh56" path="res://Scripts/MainUI.gd" id="1_475mu"]
 [ext_resource type="Texture2D" uid="uid://dxhywro0k422l" path="res://UI/stone_background.png" id="1_fdbdo"]
@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://cfqb8ws5bdeb3" path="res://UI/armour weapon icon.png" id="6_475mu"]
 [ext_resource type="Texture2D" uid="uid://cfcsfm4cqgtx7" path="res://Assets/Icons/HerbalismIcon.png" id="6_i0lr5"]
 [ext_resource type="Texture2D" uid="uid://b5ipf4c4gxdil" path="res://Assets/Icons/CombatIcon.png" id="7_r3ckc"]
+[ext_resource type="Script" uid="uid://dvb2yphgulgq4" path="res://Scripts/ArmorPanel.gd" id="8_i0lr5"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_44ib0"]
 texture = ExtResource("1_fdbdo")
@@ -153,7 +154,6 @@ size_flags_horizontal = 4
 show_percentage = false
 
 [node name="ArmorPanel" type="Panel" parent="."]
-visible = false
 custom_minimum_size = Vector2(300, 400)
 anchors_preset = 3
 anchor_left = 1.0
@@ -169,11 +169,60 @@ grow_vertical = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxTexture_44ib0")
+script = ExtResource("8_i0lr5")
 
-[node name="Armor" type="Panel" parent="ArmorPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="ArmorPanel"]
 layout_mode = 2
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 27.0
+offset_top = 36.0
+offset_right = -26.0
+offset_bottom = -34.0
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="HelmSlot" type="Button" parent="ArmorPanel/VBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="ChestRow" type="HBoxContainer" parent="ArmorPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="WeaponSlot" type="Button" parent="ArmorPanel/VBoxContainer/ChestRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+
+[node name="ChestSlot" type="Button" parent="ArmorPanel/VBoxContainer/ChestRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+
+[node name="ShieldSlot" type="Button" parent="ArmorPanel/VBoxContainer/ChestRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+
+[node name="LegsSlot" type="Button" parent="ArmorPanel/VBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Equipment" type="Label" parent="ArmorPanel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.725
+anchor_top = 0.383
+anchor_right = 0.725
+anchor_bottom = 0.383
+offset_left = -125.5
+offset_top = -113.2
+offset_right = -2.5
+offset_bottom = -79.2
+theme_override_font_sizes/font_size = 22
+text = "Equipment"
 
 [node name="InventoryButton" type="Button" parent="."]
 anchors_preset = 3

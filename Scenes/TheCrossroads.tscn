@@ -13,8 +13,8 @@
 [ext_resource type="Texture2D" uid="uid://cm4mwidugapea" path="res://ExternalArt/New Art/Pixel Crawler - Free Pack 2.0.1/Pixel Crawler - Free Pack/Environment/Tilesets/Cave_Tiles.png" id="13_ytnni"]
 [ext_resource type="PackedScene" uid="uid://bq45ki5t54ivj" path="res://Ore Scenes/SilverNode.tscn" id="14_mykux"]
 [ext_resource type="PackedScene" uid="uid://dfr6u3h177ppf" path="res://Ore Scenes/CopperNode.tscn" id="15_w0rdw"]
-[ext_resource type="PackedScene" path="res://Scenes/rock_wall.tscn" id="16_5pthx"]
-[ext_resource type="PackedScene" path="res://Scenes/rock_stone.tscn" id="18_jblk6"]
+[ext_resource type="PackedScene" uid="uid://dtbq3hmpmarqm" path="res://Scenes/rock_wall.tscn" id="16_5pthx"]
+[ext_resource type="PackedScene" uid="uid://dcsjpr6ilrvis" path="res://Scenes/rock_stone.tscn" id="18_jblk6"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xqdb4"]
 texture = ExtResource("8_doijw")
@@ -3250,7 +3250,7 @@ position = Vector2(38, 581)
 shape = SubResource("RectangleShape2D_alh3a")
 
 [node name="DefaultSpawn" type="Marker2D" parent="."]
-position = Vector2(43, -79)
+position = Vector2(42, -26)
 
 [node name="HollowedPickaxe" parent="." instance=ExtResource("4_22w65")]
 position = Vector2(38, 14)

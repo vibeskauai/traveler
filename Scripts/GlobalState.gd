@@ -1,14 +1,16 @@
 extends Node
 
+
+signal new_game_started(new_position: Vector2)
 # Player-related data
-var player_position : Vector2 = Vector2(0, 0)  # Default starting position (Vector2 type)
+var player_position : Vector2 = Vector2(43, -42)  # Default starting position (Vector2 type)
 var inventory = {}  # Inventory will be a dictionary where items are stored
 var player_xp = 0  # Player experience points
 var total_level = 1  # Starting level
 var health = 100  # Player health
 
 # NEW: Last facing direction (defaulting to facing right)
-var last_facing_direction : Vector2 = Vector2.RIGHT
+var last_facing_direction : Vector2 = Vector2(0, 1)
 
 # Skill progression data (Mining, Herbalism, Combat)
 var mining_xp = 0
@@ -22,8 +24,11 @@ var combat_level = 1
 
 var equipped_items = {
 	"weapon": null,
-	"armor": null,
-	"pickaxe": null
+	"helm": null,
+	"chest": null,
+	"legs": null,
+	"shield": null,
+	"pickaxe": null  # ✅ Ensure pickaxe is also considered
 }
 
 # ✅ Define all item types here
@@ -60,13 +65,12 @@ var has_upgraded_pickaxe = false
 
 # Autosave Timer
 var autosave_timer : Timer
-# Player data
+
+var is_new_game: bool = false
 # Path for the save file
 var save_file_path = "user://game_data.json"
 
 # Called when the game starts
-
-	# Initialize autosave functionality
 func _ready():
 	autosave_timer = Timer.new()
 	add_child(autosave_timer)
@@ -78,12 +82,63 @@ func _ready():
 	# Load saved game data when the game starts
 	load_game_data()
 
+func _process(delta):
+	if Input.is_action_just_pressed("new_game"):
+		new_game()  # This calls your new_game() function and resets all data
+
+# Function to start a new game by resetting all game data
+func new_game():
+	print("🚀 Starting a new game. Resetting data...")
+
+	# ✅ Prevents old positions from being saved before reload
+	is_new_game = true
+
+	# Remove the old save file to avoid loading old data
+	if FileAccess.file_exists(save_file_path):
+		print("🗑️ Removing old save file...")
+		DirAccess.remove_absolute(save_file_path)
+
+	# ✅ Set the default new game player position
+	player_position = Vector2(43, -42)
+	print("✅ New default position set:", player_position)
+
+	# Reset all other game data
+	inventory = {}
+	player_xp = 0
+	total_level = 1
+	health = 100
+	last_facing_direction = Vector2(0, 0)
+	
+	mining_xp = 0
+	herbalism_xp = 0
+	combat_xp = 0
+	mining_level = 1
+	herbalism_level = 1
+	combat_level = 1
+
+	equipped_items = {
+		"weapon": null,
+		"armor": null,
+		"pickaxe": null
+	}
+
+	has_spoken_to_durmil = false
+	has_upgraded_pickaxe = false
+	mined_ores.clear()
+
+	# ✅ Immediately save the new game state
+	print("💾 Saving new game state...")
+	save_all_data()
+	
+	print("✅ New game created and saved with default player position:", player_position)
+
+
+
 # Function to update player position
 func update_player_position(new_position: Vector2):
 	player_position = new_position
 	save_all_data()  # Automatically save whenever position is updated
 
-# Save all game data to a file
 # Save all game data to a file
 func save_all_data():
 	var save_dict = {
@@ -121,50 +176,85 @@ func save_all_data():
 		file.close()
 
 
-
-# Load all game data from a file
 # Load all game data from a file
 func load_game_data():
+	if not FileAccess.file_exists(save_file_path):
+		print("⚠️ No save file found, loading defaults.")
+		return
+
 	var file = FileAccess.open(save_file_path, FileAccess.READ)
 	if file:
 		var json_data = file.get_as_text()
 		var json = JSON.new()
 		var parse_result = json.parse(json_data)
+
 		if parse_result == OK:
-			var data = json.get_data()  # Get parsed data
-			# Load player position
+			var data = json.get_data()
+
+			# ✅ Load Player Position
 			var position_string = data.get("player_position", "0,0")
 			var position_array = position_string.split(",")
 			player_position = Vector2(float(position_array[0]), float(position_array[1]))
+			
+			# ✅ Declare Facing Direction Variable **Before Use**
+			var loaded_facing_direction = Vector2.ZERO
 
-			# Load other game data
+			# ✅ Load Last Facing Direction
+			var facing_string = data.get("last_facing_direction", "0,1")  # Default to left
+			var facing_array = facing_string.split(",")
+			last_facing_direction = Vector2(float(facing_array[0]), float(facing_array[1]))
+			print("↔️ Loaded last facing direction from save:", last_facing_direction)
+			
+				  # Ensure it does not load (0,0), which is an invalid direction
+			if loaded_facing_direction == Vector2.ZERO:
+				last_facing_direction = Vector2(0, 1)  # ✅ Default to DOWN (0,1)
+			else:
+				last_facing_direction = loaded_facing_direction
+				
+			# ✅ **Load Equipped Items Properly**
+			equipped_items = data.get("equipped_items", equipped_items)
+			if equipped_items == null:
+				equipped_items = { "weapon": null, "helm": null, "chest": null, "legs": null, "shield": null, "pickaxe": null }
+
+
+			# ✅ Load Other Game Data
 			inventory = data.get("inventory", {})
-			equipped_items = data.get("equipped_items", equipped_items)  # ✅ Load equipped items
+			equipped_items = data.get("equipped_items", equipped_items)
 			player_xp = data.get("player_xp", 0)
 			total_level = data.get("total_level", 1)
 			health = data.get("health", 100)
 			mining_xp = data.get("mining_xp", 0)
 			herbalism_xp = data.get("herbalism_xp", 0)
 			combat_xp = data.get("combat_xp", 0)
-
-			# Load last facing direction
-			var facing_string = data.get("last_facing_direction", "1,0")
-			var facing_array = facing_string.split(",")
-			last_facing_direction = Vector2(float(facing_array[0]), float(facing_array[1]))
-
 			has_spoken_to_durmil = data.get("has_spoken_to_durmil", false)
 			has_upgraded_pickaxe = data.get("has_upgraded_pickaxe", false)
+
 		else:
-			print("Error parsing saved data: ", json.get_error_message())
+			print("❌ Error parsing saved data: ", json.get_error_message())
+
 		file.close()
 	else:
-		print("No save file found, loading defaults.")
+		print("⚠️ Failed to open save file.")
 
+	# ✅ Reset `is_new_game` AFTER loading is complete
+	GlobalState.is_new_game = false
+
+	# ✅ Apply the player's new position after the game loads
+	var root = get_tree().get_root()
+	if root.has_node("TheCrossroads/Player"):
+		var player = root.get_node("TheCrossroads/Player")
+		player.call_deferred("set_global_position", player_position)
+		print("✅ Player position updated after game load:", player_position)
+
+	# ✅ **Apply Equipped Items After Loading**
+	if get_tree().get_root().has_node("TheCrossroads/Player"):
+		var player = get_tree().get_root().get_node("TheCrossroads/Player")
+		player.call_deferred("update_pickaxe_visibility")  # ✅ Ensure player updates pickaxe visibility
+		print("✅ Player visibility updated after game load!")
 
 # Function for autosave (called every interval)
 func _on_autosave_timeout():
 	save_all_data()  # Save data
-	print("Game autosaved.")
 
 # Sync player stats (XP, level) with PlayerStats.gd
 func sync_player_stats():
@@ -177,12 +267,10 @@ func sync_player_stats():
 	GlobalState.combat_xp = combat_xp
 	GlobalState.inventory = inventory  # Sync inventory as well
 
-
 # NEW: Function to update the last facing direction and save
 func update_last_facing_direction(new_direction: Vector2):
 	last_facing_direction = new_direction
-	save_all_data()
-
+	save_all_data()  # ✅ Auto-save when facing direction changes
 
 # Save ore positions and states when ores are mined
 func save_mined_ore(position: Vector2, ore_type: String):

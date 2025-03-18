@@ -50,8 +50,6 @@ func _ready():
 		GlobalState.equipped_items = equipped_items  # Default values
 
 	print("📌 Equipped Items Loaded:", equipped_items)
-
-	print("🔄 Checking inventory format on game load...")
 	
 	# Ensure inventory is initialized
 	if not GlobalState.inventory:
@@ -301,7 +299,6 @@ func unequip_item(item_name: String):
 
 			sync_player_stats()
 			inventory_ui.update_inventory_ui()
-			inventory_ui.update_armor_ui()
 
 			print("📌 Updated Equipped Items After Unequipping:", equipped_items)
 			print("📌 Updated Inventory After Unequipping:", inventory)
@@ -322,7 +319,6 @@ func get_equipped_item(item_type: String) -> String:
 # Function for autosave (called every interval)
 func _on_autosave_timeout():
 	GlobalState.save_all_data()  # Save data
-	print("Game autosaved.")
 
 # Optionally, trigger manual save when a key is pressed (e.g., F5 or Ctrl+S)
 func _process(delta):

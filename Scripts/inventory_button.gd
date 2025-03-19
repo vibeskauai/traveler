@@ -4,6 +4,7 @@ extends Button
 @onready var inventory_button = $InventoryButton  # The button node
 
 func _ready():
+	mouse_filter = Control.MOUSE_FILTER_STOP  # Blocks clicks from reaching the game world
 	# Ensure the inventory panel is not null
 	if inventory_panel:
 		self.connect("pressed", Callable(self, "_on_inventory_button_pressed"))

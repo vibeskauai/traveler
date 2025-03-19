@@ -2637,7 +2637,7 @@ size = Vector2(33.5, 20)
 
 [node name="MainUI" parent="." instance=ExtResource("4_pfwsi")]
 
-[node name="Player" parent="." groups=["player"] instance=ExtResource("2_1al20")]
+[node name="Player" parent="." instance=ExtResource("2_1al20")]
 position = Vector2(42, -47)
 
 [node name="Grass" type="TileMap" parent="."]
@@ -2678,11 +2678,11 @@ position = Vector2(-96, 277)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore17" parent="." instance=ExtResource("15_w0rdw")]
-position = Vector2(-83, 97)
+position = Vector2(-94, 99)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore49" parent="." instance=ExtResource("15_w0rdw")]
-position = Vector2(-71, 75)
+position = Vector2(-18, 132)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore18" parent="." instance=ExtResource("15_w0rdw")]
@@ -2701,11 +2701,6 @@ scale = Vector2(0.85366, 0.885522)
 position = Vector2(-101, 392)
 scale = Vector2(0.85366, 0.885522)
 
-[node name="Ore38" parent="." instance=ExtResource("15_w0rdw")]
-position = Vector2(-55, 113)
-scale = Vector2(0.85366, 0.885522)
-drop_amount = 100
-
 [node name="Ore39" parent="." instance=ExtResource("15_w0rdw")]
 position = Vector2(-96, 240)
 scale = Vector2(0.85366, 0.885522)
@@ -2719,7 +2714,7 @@ position = Vector2(-62, 255)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore25" parent="." instance=ExtResource("15_w0rdw")]
-position = Vector2(-73, 167)
+position = Vector2(-77, 165)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore35" parent="." instance=ExtResource("15_w0rdw")]
@@ -2730,7 +2725,7 @@ scale = Vector2(0.85366, 0.885522)
 position = Vector2(148, 284)
 scale = Vector2(0.85366, 0.885522)
 
-[node name="Ore26" parent="." instance=ExtResource("15_w0rdw")]
+[node name="CopperOre3" parent="." instance=ExtResource("15_w0rdw")]
 position = Vector2(166, 100)
 scale = Vector2(0.85366, 0.885522)
 
@@ -3116,7 +3111,7 @@ position = Vector2(-95, 218)
 position = Vector2(-70, 219)
 
 [node name="RockWall186" parent="." instance=ExtResource("18_jblk6")]
-position = Vector2(-52, 197)
+position = Vector2(-50, 203)
 
 [node name="RockWall199" parent="." instance=ExtResource("18_jblk6")]
 position = Vector2(-32, 264)
@@ -3131,7 +3126,7 @@ position = Vector2(-44, 309)
 position = Vector2(-62, 329)
 
 [node name="RockWall187" parent="." instance=ExtResource("18_jblk6")]
-position = Vector2(-54, 157)
+position = Vector2(-52, 154)
 
 [node name="RockWall188" parent="." instance=ExtResource("18_jblk6")]
 position = Vector2(-67, 138)
@@ -3246,7 +3241,7 @@ ore_type = "silver"
 position = Vector2(38, 21)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CrossroadsToMines"]
-position = Vector2(38, 581)
+position = Vector2(0, 553)
 shape = SubResource("RectangleShape2D_alh3a")
 
 [node name="DefaultSpawn" type="Marker2D" parent="."]
@@ -3255,3 +3250,6 @@ position = Vector2(42, -26)
 [node name="HollowedPickaxe" parent="." instance=ExtResource("4_22w65")]
 position = Vector2(38, 14)
 rotation = 4.71239
+
+[node name="CopperOre5" parent="." instance=ExtResource("15_w0rdw")]
+position = Vector2(-22, 170)

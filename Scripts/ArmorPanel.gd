@@ -5,8 +5,11 @@ extends Control
 @onready var weapon_slot = $VBoxContainer/ChestRow/WeaponSlot
 @onready var shield_slot = $VBoxContainer/ChestRow/ShieldSlot
 @onready var legs_slot = $VBoxContainer/LegsSlot
-@onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")
 
+@onready var player = get_tree().get_first_node_in_group("player")
+@onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")
+@onready var global_state = get_node("/root/GlobalState")  # Sync equipped items with save system
+@onready var player_stats = get_node("/root/PlayerStats")
 
 var equipped_items = {
 	"weapon": null,
@@ -17,8 +20,12 @@ var equipped_items = {
 }
 
 func _ready():
+	mouse_filter = Control.MOUSE_FILTER_STOP  # Blocks clicks from reaching the game world
 	load_equipped_items()
+	player_stats.connect("equipment_changed", Callable(self, "_on_equipment_changed"))
 	connect_slots()
+func _on_equipment_changed(slot_type, item_name):
+	update_slot(slot_type, item_name)  # ✅ Refresh UI when equipment changes
 
 # ✅ **Load equipped items from GlobalState & update UI**
 # Load equipped items from GlobalState & update UI
@@ -80,53 +87,24 @@ func connect_slots():
 
 
 # ✅ **Handles clicking on equipment slots**
-func _on_slot_clicked(slot_type: String):
-	if equipped_items[slot_type]:  
-		unequip_item(slot_type)  # ✅ Unequip properly
+func update_ui():
+	print("🔄 [PlayerStats] Updating UI after equip/unequip...")
+
+	var armor_panel = get_tree().get_first_node_in_group("armor_ui")
+	if armor_panel:
+		print("✅ [PlayerStats] Found Armor Panel. Reloading UI...")
+		armor_panel.load_equipped_items()
 	else:
-		var item_name = get_item_from_inventory(slot_type)
-		if item_name:
-			equip_item_from_inventory(slot_type, item_name)
-		else:
-			print("❌ ERROR: No item found in inventory for slot", slot_type)
+		print("❌ [PlayerStats] ERROR: ArmorPanel UI not found!")
 
-	# ✅ Double-check slot was actually unequipped
-	if not equipped_items[slot_type]:
-		print("✅ Slot", slot_type, "is now empty.")  
+	var inventory_panel = get_tree().get_first_node_in_group("inventory_ui")
+	if inventory_panel:
+		print("✅ [PlayerStats] Found Inventory Panel. Updating UI...")
+		inventory_panel.update_inventory_ui()
 	else:
-		print("⚠️ Warning: Slot", slot_type, "still has:", equipped_items[slot_type])
+		print("❌ [PlayerStats] ERROR: InventoryPanel UI not found!")
 
 
-# ✅ **Unequip an item and return it to the inventory**
-# Unequip an item and return it to the inventory
-func unequip_item(slot_type: String):
-	var item = equipped_items.get(slot_type, null)
-	if item:
-		print("❎ Unequipping:", item, "from", slot_type)
-
-		# Add the item back to the inventory
-		if GlobalState.inventory.has(item):
-			GlobalState.inventory[item]["quantity"] += 1
-		else:
-			GlobalState.inventory[item] = {"quantity": 1, "type": GlobalState.get_item_type(item)}
-
-		# Remove item from equipped slot
-		equipped_items[slot_type] = null
-		GlobalState.equipped_items[slot_type] = null
-		GlobalState.save_all_data()
-
-		# Update UI
-		var slot = get_slot_by_type(slot_type)
-		if slot:
-			update_slot(slot, "")
-
-		# **Ensure Inventory UI Updates**
-		var inventory_panel = get_inventory_panel()
-		if inventory_panel:
-			print("✅ InventoryPanel found, updating UI...")
-			inventory_panel.update_inventory()
-		else:
-			print("❌ ERROR: InventoryPanel not found during unequip!")
 
 func get_inventory_panel():
 	var ui_root = get_tree().get_root().find_child("MainUI", true, false)
@@ -139,40 +117,53 @@ func get_inventory_panel():
 	return null
 
 # Equip item from inventory & update UI correctly
+
 func equip_item_from_inventory(slot_type: String, item_name: String):
-	if equipped_items.get(slot_type):
+	print("✅ Equipping from inventory:", item_name, "to", slot_type)
+
+	if player_stats.equipped_items.get(slot_type):
 		print("❌ Slot already occupied:", slot_type)
 		return
 
-	print("✅ Equipping from inventory:", item_name, "to", slot_type)
-
 	# ✅ Remove from inventory before equipping
-	if GlobalState.inventory.has(item_name):
-		GlobalState.inventory.erase(item_name)
+	if player_stats.inventory.has(item_name):
+		player_stats.inventory.erase(item_name)
 
 	# ✅ Equip the item
-	equipped_items[slot_type] = item_name
-	GlobalState.equipped_items[slot_type] = item_name
-	GlobalState.save_all_data()
+	player_stats.equipped_items[slot_type] = item_name
+	global_state.save_all_data()
 
-	# ✅ Force UI update after equipping
-	var slot = get_slot_by_type(slot_type)
-	if slot:
-		print("🎯 Updating UI for:", slot_type, "Slot:", slot)
-		update_slot(slot, item_name)
+	# ✅ Update UI
+	update_slot(get_slot_by_type(slot_type), item_name)
+
+	print("✅ Finished equipping:", item_name)
+
+
+func unequip_item(slot_type: String):
+	print("🛠 [ArmorPanel] Called unequip_item() for:", slot_type)
+	
+	if not equipped_items.has(slot_type):
+		print("❌ [ArmorPanel] ERROR: Slot does not exist in equipped_items:", slot_type)
+		return
+
+	var item = equipped_items[slot_type]
+	if item:
+		print("❎ [ArmorPanel] Unequipping:", item, "from", slot_type)
+
+		# ✅ Ensure PlayerStats Handles Data Properly
+		if player_stats:
+			player_stats.unequip_item(slot_type)
+		else:
+			print("❌ [ArmorPanel] ERROR: PlayerStats not found!")
+
+		# ✅ Refresh UI
+		load_equipped_items()
 	else:
-		print("❌ ERROR: Slot not found for type:", slot_type)
-
-	# ✅ **Ensure Inventory UI Updates**
-	var inventory_panel = get_inventory_panel()
-	if inventory_panel:
-		print("✅ InventoryPanel found, updating UI...")
-		inventory_panel.update_inventory()
-	else:
-		print("❌ ERROR: InventoryPanel not found!")
+		print("⚠️ [ArmorPanel] WARNING: No item to unequip in slot", slot_type)
 
 
-
+func update_armor_ui():
+	print("🔄 Updating Armor UI...")
 
 
 # ✅ **Find an available item in inventory for a specific slot**
@@ -219,6 +210,27 @@ func update_slot(slot: Button, item_name: String):
 		slot.text = ""  # ✅ No empty text
 		print("✅ Slot now fully empty:", slot.name)
 
+func _on_slot_clicked(slot_type: String):
+	print("🖱️ [ArmorPanel] Clicked slot:", slot_type)
+
+	if equipped_items.get(slot_type):  
+		print("❎ [ArmorPanel] Unequipping item from:", slot_type)
+		player_stats.unequip_item(slot_type)  # ✅ Ensure unequip is actually called
+		player.update_pickaxe_visibility()  # ✅ Ensure player sprite updates
+	else:
+		var item_name = get_item_from_inventory(slot_type)
+		if item_name:
+			print("✅ [ArmorPanel] Equipping:", item_name)
+			player_stats.equip_item(slot_type, item_name)
+			player.update_pickaxe_visibility()
+		else:
+			print("❌ [ArmorPanel] ERROR: No item found in inventory for slot", slot_type)
+
+	# ✅ Ensure slot was actually unequipped
+	if not equipped_items.get(slot_type):
+		print("✅ [ArmorPanel] Slot", slot_type, "is now empty.")
+	else:
+		print("⚠️ [ArmorPanel] Slot", slot_type, "still has:", equipped_items[slot_type])
 
 
 # Get the item icon for a given item name

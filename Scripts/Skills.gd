@@ -11,6 +11,7 @@ extends Panel
 @onready var mining_progress_node: ProgressBar = $StatsContainer/MiningRow/ProgressBar
 
 func _ready():
+	mouse_filter = Control.MOUSE_FILTER_STOP  # Blocks clicks from reaching the game world
 	# Center the StatsPanel with a fixed size (400x300) manually:
 	custom_minimum_size = Vector2(300, 400)
 	

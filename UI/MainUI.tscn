@@ -2,21 +2,21 @@
 
 [ext_resource type="Script" uid="uid://cl1tyncrmrh56" path="res://Scripts/MainUI.gd" id="1_475mu"]
 [ext_resource type="Texture2D" uid="uid://dxhywro0k422l" path="res://UI/stone_background.png" id="1_fdbdo"]
-[ext_resource type="Script" uid="uid://0n3hhc3lhkrn" path="res://Scripts/inventory.gd" id="1_xh0hd"]
+[ext_resource type="Script" uid="uid://0n3hhc3lhkrn" path="res://Scripts/Inventory.gd" id="1_xh0hd"]
 [ext_resource type="Script" uid="uid://b32pvh2nnofhh" path="res://Scripts/inventory_button.gd" id="1_yd0xa"]
 [ext_resource type="Texture2D" uid="uid://cf0s5iml2blxf" path="res://UI/backpack icon.png" id="2_wa2eh"]
 [ext_resource type="Script" uid="uid://bblc1ard3nof4" path="res://Scripts/Skills.gd" id="4_uqb74"]
 [ext_resource type="Texture2D" uid="uid://dls2am2x0trxc" path="res://UI/Stats Icon.png" id="5_8cqdv"]
-[ext_resource type="Texture2D" uid="uid://bdfn3j5iccvn" path="res://Assets/Icons/MiningIcon.png" id="5_e10a1"]
+[ext_resource type="Texture2D" uid="uid://bdfn3j5iccvn" path="res://assets/Icons/MiningIcon.png" id="5_e10a1"]
 [ext_resource type="Texture2D" uid="uid://cfqb8ws5bdeb3" path="res://UI/armour weapon icon.png" id="6_475mu"]
-[ext_resource type="Texture2D" uid="uid://cfcsfm4cqgtx7" path="res://Assets/Icons/HerbalismIcon.png" id="6_i0lr5"]
-[ext_resource type="Texture2D" uid="uid://b5ipf4c4gxdil" path="res://Assets/Icons/CombatIcon.png" id="7_r3ckc"]
+[ext_resource type="Texture2D" uid="uid://cfcsfm4cqgtx7" path="res://assets/Icons/HerbalismIcon.png" id="6_i0lr5"]
+[ext_resource type="Texture2D" uid="uid://b5ipf4c4gxdil" path="res://assets/Icons/CombatIcon.png" id="7_r3ckc"]
 [ext_resource type="Script" uid="uid://dvb2yphgulgq4" path="res://Scripts/ArmorPanel.gd" id="8_i0lr5"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_44ib0"]
 texture = ExtResource("1_fdbdo")
 
-[node name="MainUI" type="CanvasLayer"]
+[node name="MainUI" type="CanvasLayer" groups=["main_ui"]]
 script = ExtResource("1_475mu")
 
 [node name="InventoryPanel" type="Panel" parent="." groups=["inventory_ui"]]

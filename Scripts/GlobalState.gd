@@ -1,8 +1,11 @@
 extends Node
 
+@onready var player = get_tree().get_first_node_in_group("player")
 @onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
+@onready var player_stats = get_node("/root/PlayerStats")  # Access PlayerStats for syncing equipped items
 
 signal new_game_started(new_position: Vector2)
+
 # Player-related data
 var player_position : Vector2 = Vector2(43, -42)  # Default starting position (Vector2 type)
 var inventory = {}  # Inventory will be a dictionary where items are stored
@@ -11,7 +14,7 @@ var total_level = 1  # Starting level
 var health = 100  # Player health
 
 # NEW: Last facing direction (defaulting to facing right)
-var last_facing_direction : Vector2 = Vector2(0, 1)
+var last_facing_direction = Vector2(0, 1)  # Default value to "down" (0,1)
 
 # Skill progression data (Mining, Herbalism, Combat)
 var mining_xp = 0
@@ -133,8 +136,6 @@ func new_game():
 	
 	print("✅ New game created and saved with default player position:", player_position)
 
-
-
 # Function to update player position
 func update_player_position(new_position: Vector2):
 	player_position = new_position
@@ -142,13 +143,6 @@ func update_player_position(new_position: Vector2):
 
 # Save all game data to a file
 func save_all_data():
-	GlobalState.equipped_items = equipped_items  # ✅ Ensure equipped items are stored
-	GlobalState.inventory = inventory  # ✅ Store inventory data
-	var save_dict = {
-		"inventory": inventory,
-		"equipped_items": equipped_items  # ✅ Ensure equipped items are saved
-	}
-
 	# Convert last facing direction to string in "x,y" format
 	var last_facing_str = str(last_facing_direction.x) + "," + str(last_facing_direction.y)
 
@@ -164,6 +158,7 @@ func save_all_data():
 		"herbalism_xp": herbalism_xp,
 		"combat_xp": combat_xp,
 		"last_facing_direction": last_facing_str,
+		"mined_ores": mined_ores,
 		"has_spoken_to_durmil": has_spoken_to_durmil,
 		"has_upgraded_pickaxe": has_upgraded_pickaxe
 	}
@@ -179,6 +174,7 @@ func save_all_data():
 		file.close()
 
 
+## Load all game data from a file
 # Load all game data from a file
 func load_game_data():
 	if not FileAccess.file_exists(save_file_path):
@@ -188,41 +184,35 @@ func load_game_data():
 	var file = FileAccess.open(save_file_path, FileAccess.READ)
 	if file:
 		var json_data = file.get_as_text()
+		print("🔄 File data loaded:", json_data)  # Debug print to see the content of the loaded file
+		
 		var json = JSON.new()
 		var parse_result = json.parse(json_data)
-
+		
 		if parse_result == OK:
 			var data = json.get_data()
 
-			# ✅ Load Player Position
+			# Load Player Position
 			var position_string = data.get("player_position", "0,0")
 			var position_array = position_string.split(",")
 			player_position = Vector2(float(position_array[0]), float(position_array[1]))
-			
-			# ✅ Declare Facing Direction Variable **Before Use**
-			var loaded_facing_direction = Vector2.ZERO
 
-			# ✅ Load Last Facing Direction
-			var facing_string = data.get("last_facing_direction", "0,1")  # Default to left
+			# Load Last Facing Direction
+			var facing_string = data.get("last_facing_direction", "0,1")
 			var facing_array = facing_string.split(",")
 			last_facing_direction = Vector2(float(facing_array[0]), float(facing_array[1]))
 			print("↔️ Loaded last facing direction from save:", last_facing_direction)
-			
-				  # Ensure it does not load (0,0), which is an invalid direction
-			if loaded_facing_direction == Vector2.ZERO:
-				last_facing_direction = Vector2(0, 1)  # ✅ Default to DOWN (0,1)
-			else:
-				last_facing_direction = loaded_facing_direction
-				
-			# ✅ **Load Equipped Items Properly**
+
+			# Load Equipped Items
 			equipped_items = data.get("equipped_items", equipped_items)
 			if equipped_items == null:
 				equipped_items = { "weapon": null, "helm": null, "chest": null, "legs": null, "shield": null, "pickaxe": null }
 
-
-			# ✅ Load Other Game Data
+			# Load Inventory
 			inventory = data.get("inventory", {})
-			equipped_items = data.get("equipped_items", equipped_items)
+			print("📌 [GlobalState] Loaded Inventory from Save:", inventory)
+
+			# Load Other Game Data
 			player_xp = data.get("player_xp", 0)
 			total_level = data.get("total_level", 1)
 			health = data.get("health", 100)
@@ -232,6 +222,20 @@ func load_game_data():
 			has_spoken_to_durmil = data.get("has_spoken_to_durmil", false)
 			has_upgraded_pickaxe = data.get("has_upgraded_pickaxe", false)
 
+			# Load Mined Ores - Debugging if it's correctly loaded
+			mined_ores = data.get("mined_ores", {})
+			
+			# Normalize position keys for mined_ores
+			var normalized_mined_ores = {}
+			for position_str in mined_ores.keys():
+				# Remove parentheses if present and normalize to "x,y" format
+				var normalized_position = position_str.replace("(", "").replace(")", "")  # Clean up the parentheses
+				normalized_mined_ores[normalized_position] = mined_ores[position_str]
+
+			mined_ores = normalized_mined_ores
+
+			print("📌 [GlobalState] Loaded Mined Ores:", mined_ores)  # Debugging: see if mined_ores is correctly loaded
+
 		else:
 			print("❌ Error parsing saved data: ", json.get_error_message())
 
@@ -239,7 +243,7 @@ func load_game_data():
 	else:
 		print("⚠️ Failed to open save file.")
 
-	# ✅ Reset `is_new_game` AFTER loading is complete
+	# ✅ Reset is_new_game AFTER loading is complete
 	GlobalState.is_new_game = false
 
 	# ✅ Apply the player's new position after the game loads
@@ -254,6 +258,8 @@ func load_game_data():
 		var player = get_tree().get_root().get_node("TheCrossroads/Player")
 		player.call_deferred("update_pickaxe_visibility")  # ✅ Ensure player updates pickaxe visibility
 		print("✅ Player visibility updated after game load!")
+
+
 
 # Function for autosave (called every interval)
 func _on_autosave_timeout():
@@ -270,87 +276,70 @@ func sync_player_stats():
 	GlobalState.combat_xp = combat_xp
 	GlobalState.inventory = inventory  # Sync inventory as well
 
-func equip_item(slot_type: String, item_name: String):
-	if not inventory.has(item_name):
-		print("❌ ERROR: Item not found in inventory:", item_name)
-		return
-
-	# Equip item
-	equipped_items[slot_type] = item_name
-	GlobalState.equipped_items = equipped_items
-	GlobalState.inventory.erase(item_name)
-	GlobalState.save_all_data()
-	print("✅ Equipped item:", item_name, "to", slot_type)
-	print("🛠 Debugging equipped items:", GlobalState.equipped_items)
-
-func unequip_item(slot_type: String):
-	if not equipped_items.has(slot_type) or equipped_items[slot_type] == null:
-		print("❌ ERROR: No item equipped in slot:", slot_type)
-		return
-
-	var item_name = equipped_items[slot_type]
-	print("❎ Unequipping item:", item_name, "from", slot_type)
-
-	# Add item back to inventory
-	if not inventory.has(item_name):
-		inventory[item_name] = {"quantity": 1, "type": get_item_type(item_name)}
-	else:
-		inventory[item_name]["quantity"] += 1
-
-	# Remove from equipped items
-	equipped_items[slot_type] = null
-	GlobalState.equipped_items = equipped_items
-	GlobalState.inventory = inventory
-	GlobalState.save_all_data()
-	print("🛠 Debugging equipped items:", GlobalState.equipped_items)
-
-
-
-# Refresh UI for both InventoryPanel and ArmorPanel
-# GlobalState.gd: Force UI update
-func refresh_ui():
-	print("\n🔄 Refreshing UI for Inventory & Armor Panel")
-
-	# Update Inventory UI
-	if inventory_panel == null:
-		inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
-
-
-
-	# Update ArmorPanel UI
-	var armor_panel = get_tree().get_root().get_node_or_null("MainUI/ArmorPanel")
-	if armor_panel:
-		armor_panel.load_equipped_items()  # Ensure armor panel is updated
-	else:
-		print("❌ ERROR: ArmorPanel not found!")
-
-	print("🔄 UI refresh completed.")
-
-
 
 # NEW: Function to update the last facing direction and save
 func update_last_facing_direction(new_direction: Vector2):
 	last_facing_direction = new_direction
 	save_all_data()  # ✅ Auto-save when facing direction changes
 
-# Save ore positions and states when ores are mined
-func save_mined_ore(position: Vector2, ore_type: String):
-	# Save the mined ore's position and type
-	mined_ores[position] = ore_type
-	print("🪨 Ore saved: ", ore_type, " at position ", position)
+func update_equipped_items(slot_type, item_name):
+	# Syncs equipped items with GlobalState
+	equipped_items[slot_type] = item_name
+	save_all_data()
 
-# Check if an ore has already been mined based on position
+func update_inventory(item_name, add_item: bool):
+	# Adds/removes item from inventory in GlobalState
+	if add_item:
+		inventory[item_name] = {"quantity": 1, "type": "pickaxe"}
+	else:
+		inventory.erase(item_name)
+	save_all_data()
+
+# Save mined ore with position and type
+func save_mined_ore(position: Vector2, ore_type: String):
+	# Ensure ore_type is correctly passed
+	if ore_type == "":
+		print("❌ Ore type is empty! This should be corrected.")
+		return  # Do not save if ore type is empty (error handling)
+
+	# Convert position to string as a key (Vector2 doesn't work directly with JSON)
+	var position_str = str(position.x).strip_edges() + "," + str(position.y).strip_edges()
+
+	# Save the ore type at this position
+	mined_ores[position_str] = ore_type
+
+	# Debugging: Print out the saved data to ensure it's correct
+	print("✅ [GlobalState] Saving mined ore at position:", position_str, "with type:", ore_type)
+
+	# Sync with save system
+	save_all_data()
+
+
+# Load saved mined ores from file or global state
+func load_mined_ores():
+	# Load mined_ores from the save file
+	print("🔄 Loading mined ores...")
+
+	var file = FileAccess.open("user://mined_ores.save", FileAccess.READ)
+	if file:
+		var loaded_data = file.get_as_text()
+		var json = JSON.new()
+		var parse_result = json.parse(loaded_data)
+		if parse_result == OK:
+			mined_ores = json.get_data()
+
+			# Debugging: Print the loaded ores to verify
+			print("✅ [GlobalState] Loaded mined ores:", mined_ores)
+		else:
+			print("❌ Error parsing saved mined ores data.")
+		file.close()
+	else:
+		print("⚠️ No mined ores file found. Initializing empty.")
+		mined_ores = {}
+
+	# Debugging: Verify loaded ores after checking
+	print("🔄 Current mined ores:", mined_ores)
+
+
 func is_ore_mined(position: Vector2) -> bool:
 	return mined_ores.has(position)
-
-# Sync mined ores with the save system (call this function to save the global state)
-func sync_mined_ores():
-	# Here, you can save the mined_ores dictionary to a file or database
-	# For simplicity, let's just print it
-	print("Mined ores saved:", mined_ores)
-
-# Load saved mined ores from file or a saved state (You'd implement this based on your save/load system)
-func load_mined_ores():
-	# Load data from a file or database. For now, we're just initializing it
-	# In a real game, you'd use a save system like JSON or similar
-	print("Mined ores loaded:", mined_ores)

@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://dfr6u3h177ppf"]
 
-[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/Ore.gd" id="1_uymim"]
-[ext_resource type="Texture2D" uid="uid://c8iby7ryvral2" path="res://Assets/Ore Nodes/CopperNode.png" id="2_y7gke"]
+[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/OreNode.gd" id="1_uymim"]
+[ext_resource type="Texture2D" uid="uid://c8iby7ryvral2" path="res://assets/Ore Nodes/CopperNode.png" id="2_y7gke"]
 [ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_gyk37"]
 [ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_8gff0"]
 
@@ -12,17 +12,18 @@ radius = 8.51469
 radius = 11.0454
 
 [node name="CopperOre" type="StaticBody2D" groups=["ores"]]
+scale = Vector2(0.882295, 0.882295)
 collision_layer = 2
 script = ExtResource("1_uymim")
 
 [node name="Sprite2D" type="Sprite2D" parent="." groups=["ores"]]
-scale = Vector2(0.539062, 0.539062)
+scale = Vector2(1.01665, 1.01665)
 texture = ExtResource("2_y7gke")
 
-[node name="Hitbox" type="Area2D" parent="."]
+[node name="Hitbox" type="Area2D" parent="." groups=["ores"]]
 position = Vector2(-11, 3)
 disable_mode = 1
-collision_mask = 2
+collision_layer = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
 position = Vector2(11, -3)

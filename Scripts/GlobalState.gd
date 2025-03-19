@@ -1,5 +1,6 @@
 extends Node
 
+@onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
 
 signal new_game_started(new_position: Vector2)
 # Player-related data
@@ -141,6 +142,8 @@ func update_player_position(new_position: Vector2):
 
 # Save all game data to a file
 func save_all_data():
+	GlobalState.equipped_items = equipped_items  # ✅ Ensure equipped items are stored
+	GlobalState.inventory = inventory  # ✅ Store inventory data
 	var save_dict = {
 		"inventory": inventory,
 		"equipped_items": equipped_items  # ✅ Ensure equipped items are saved
@@ -266,6 +269,64 @@ func sync_player_stats():
 	GlobalState.herbalism_xp = herbalism_xp
 	GlobalState.combat_xp = combat_xp
 	GlobalState.inventory = inventory  # Sync inventory as well
+
+func equip_item(slot_type: String, item_name: String):
+	if not inventory.has(item_name):
+		print("❌ ERROR: Item not found in inventory:", item_name)
+		return
+
+	# Equip item
+	equipped_items[slot_type] = item_name
+	GlobalState.equipped_items = equipped_items
+	GlobalState.inventory.erase(item_name)
+	GlobalState.save_all_data()
+	print("✅ Equipped item:", item_name, "to", slot_type)
+	print("🛠 Debugging equipped items:", GlobalState.equipped_items)
+
+func unequip_item(slot_type: String):
+	if not equipped_items.has(slot_type) or equipped_items[slot_type] == null:
+		print("❌ ERROR: No item equipped in slot:", slot_type)
+		return
+
+	var item_name = equipped_items[slot_type]
+	print("❎ Unequipping item:", item_name, "from", slot_type)
+
+	# Add item back to inventory
+	if not inventory.has(item_name):
+		inventory[item_name] = {"quantity": 1, "type": get_item_type(item_name)}
+	else:
+		inventory[item_name]["quantity"] += 1
+
+	# Remove from equipped items
+	equipped_items[slot_type] = null
+	GlobalState.equipped_items = equipped_items
+	GlobalState.inventory = inventory
+	GlobalState.save_all_data()
+	print("🛠 Debugging equipped items:", GlobalState.equipped_items)
+
+
+
+# Refresh UI for both InventoryPanel and ArmorPanel
+# GlobalState.gd: Force UI update
+func refresh_ui():
+	print("\n🔄 Refreshing UI for Inventory & Armor Panel")
+
+	# Update Inventory UI
+	if inventory_panel == null:
+		inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
+
+
+
+	# Update ArmorPanel UI
+	var armor_panel = get_tree().get_root().get_node_or_null("MainUI/ArmorPanel")
+	if armor_panel:
+		armor_panel.load_equipped_items()  # Ensure armor panel is updated
+	else:
+		print("❌ ERROR: ArmorPanel not found!")
+
+	print("🔄 UI refresh completed.")
+
+
 
 # NEW: Function to update the last facing direction and save
 func update_last_facing_direction(new_direction: Vector2):

@@ -10,7 +10,8 @@ var swing_timer = 0.0  # Timer to track cooldown for swing animation
 @onready var raycast = $RayCast2D  # Access the RayCast2D node
 @onready var global_state = GlobalState  # Reference to the GlobalState singleton
 @onready var pickaxe_sprite = $PickaxeSprite
-@onready var inventory_ui = get_node_or_null("/root/TheCrossroads/MainUI/InventoryPanel")  # ✅ Prevents null errors
+@onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
+
 
 
 var equipped_item = null  # Currently equipped item
@@ -332,14 +333,14 @@ func _on_item_button_pressed(item_name: String) -> void:
 		if player_stats.has_method("equip_item"):
 			player_stats.equip_item(item_name)
 
-	update_inventory_ui()
+	update_inventory_panel()
 	update_pickaxe_visibility()  # ✅ Ensure the pickaxe shows/hides immediately
 
 
 func update_pickaxe_visibility():
 	var equipped_weapon = GlobalState.equipped_items.get("weapon", null)
 
-	# ✅ **Check if the weapon slot has a pickaxe**
+	# ✅ Ensure pickaxe visibility syncs correctly
 	if equipped_weapon and GlobalState.get_item_type(equipped_weapon) == "pickaxe":
 		pickaxe_sprite.visible = true
 		pickaxe_sprite.texture = load("res://assets/items/" + equipped_weapon + ".png")
@@ -347,11 +348,11 @@ func update_pickaxe_visibility():
 		pickaxe_sprite.visible = false
 		pickaxe_sprite.texture = null
 
-	# ✅ **Ensure UI & Inventory Refreshes Immediately**
-	var inventory_panel = get_tree().get_first_node_in_group("inventory_ui")
-	if inventory_panel:
-		inventory_panel.update_inventory_ui()
+	# ✅ Force UI refresh
+	await get_tree().process_frame
 
+	if inventory_panel == null:
+		inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
 
 
 func _on_item_picked_up(item_name: String, item_type: String):
@@ -365,9 +366,19 @@ func _on_item_picked_up(item_name: String, item_type: String):
 	sync_inventory_with_global_state()
 
 	# ✅ Ensure UI updates immediately
-	if inventory_ui:
+	if inventory_panel:
 		print("🔄 Forcing Inventory UI Update after item pickup...")
-		inventory_ui.update_inventory_ui()
+		inventory_panel.update_inventory_panel()
+
+func get_inventory_panel():
+	var ui_root = get_tree().get_root().find_child("MainUI", true, false)
+	if ui_root:
+		var inventory = ui_root.find_child("InventoryPanel", true, false)
+		if inventory:
+			print("✅ InventoryPanel found dynamically!")
+			return inventory
+	print("❌ ERROR: InventoryPanel NOT found!")
+	return null
 
 
 # Function to add the item to the inventory
@@ -384,33 +395,38 @@ func add_item_to_inventory(item_name: String, item_type: String):
 	print("📌 Updated Inventory:", player_stats.inventory)  # Debugging
 
 
-
-# Sync the inventory with GlobalState
+# Function to sync inventory with GlobalState
 func sync_inventory_with_global_state():
 	print("✅ Syncing inventory with GlobalState...")
-	
-	# ✅ Save inventory to GlobalState
+
+	# Save inventory to GlobalState
 	GlobalState.inventory = player_stats.inventory
 	GlobalState.save_all_data()
 
-	# ✅ Force UI to update
-	if inventory_ui:
+	# Force UI to update
+	if inventory_panel:
 		print("🔄 Updating Inventory UI after sync...")
-		inventory_ui.update_inventory_ui()
+		inventory_panel.update_inventory_ui()
 	else:
-		print("❌ ERROR: inventory_ui is NULL!")
+		print("❌ ERROR: inventory_panel is NULL!")
+
 
 # Function to sync player stats (to be implemented properly)
 func sync_player_stats() -> void:
 	print("Syncing player stats...")  # Placeholder
 	# Add code to sync data with GlobalState or a save system
 
-# Function to update the inventory UI (to be implemented properly)
+# Function to update the inventory UI immediately
+# ✅ Function exists inside Inventory.gd
 func update_inventory_ui():
-	if inventory_ui and inventory_ui.has_method("update_inventory_ui"):
-		inventory_ui.update_inventory_ui()
+	if inventory_panel:
+		print("✅ Updating Inventory UI...")
+		if inventory_panel.has_method("update_inventory_ui"):
+			inventory_panel.update_inventory_ui()
+		else:
+			print("❌ ERROR: InventoryPanel does not have update_inventory_ui()!")
 	else:
-		print("❌ ERROR: Inventory UI not found or update_inventory_ui() missing!")
+		print("❌ ERROR: InventoryPanel not found in Player.gd!")
 
 
 func apply_loaded_facing_direction():
@@ -440,3 +456,122 @@ func apply_loaded_facing_direction():
 	$AnimatedSprite2D.animation = new_anim
 	$AnimatedSprite2D.frame = 0
 	last_direction = new_anim  # Store the loaded direction so the idle branch uses it
+
+# Equip the item in the player inventory
+func equip_item(item_name: String):
+	print("🖱️ Player clicked on item:", item_name)
+
+	# Check if the item exists in the inventory
+	if not player_stats.inventory.has(item_name):
+		print("❌ ERROR: Item not found in inventory:", item_name)
+		return
+
+	# Check if the item is already equipped → Unequip it
+	if item_name in player_stats.equipped_items.values():
+		print("❎ Unequipping:", item_name)
+		if player_stats.has_method("unequip_item"):
+			player_stats.unequip_item(item_name)
+	else:
+		print("✅ Equipping:", item_name)
+		if player_stats.has_method("equip_item"):
+			player_stats.equip_item(item_name)
+
+	# Update the UI immediately
+	update_inventory_panel()
+	update_pickaxe_visibility()  # Ensure the pickaxe is shown or hidden immediately
+	print("🛠 Debugging equipped items:", GlobalState.equipped_items)
+
+# Unequip the item from the player inventory
+func unequip_item(slot_type: String):
+	var item = GlobalState.equipped_items.get(slot_type, null)
+	if item:
+		print("❎ Unequipping:", item, "from", slot_type)
+
+		# ✅ Make sure the item is returned to inventory
+		if GlobalState.inventory.has(item):
+			GlobalState.inventory[item]["quantity"] += 1
+		else:
+			GlobalState.inventory[item] = {"quantity": 1, "type": GlobalState.get_item_type(item)}
+
+		# ✅ Remove the item from equipped slot
+		GlobalState.equipped_items[slot_type] = null
+		GlobalState.save_all_data()
+
+		# ✅ Update Inventory UI
+		var inventory_panel = get_inventory_panel()
+		if inventory_panel:
+			print("🔄 Updating Inventory UI after unequip...")
+			inventory_panel.update_inventory_ui()
+		else:
+			print("❌ ERROR: InventoryPanel not found during unequip!")
+
+	print("✅ Slot", slot_type, "is now empty.")
+
+
+func equip_item_from_inventory(item_name: String):
+	print("✅ Attempting to equip from inventory:", item_name)
+
+	# Make sure the item exists in the inventory
+	if not GlobalState.inventory.has(item_name):
+		print("❌ ERROR: Item not found in inventory:", item_name)
+		return
+
+	# Determine the correct slot
+	var item_type = GlobalState.get_item_type(item_name)
+	var slot_type = get_slot_for_item_type(item_type)
+
+	if slot_type == "":
+		print("❌ ERROR: No valid slot for", item_name)
+		return
+
+	# Remove the item from inventory before equipping
+	GlobalState.inventory.erase(item_name)
+
+	# Equip the item in the correct slot
+	GlobalState.equipped_items[slot_type] = item_name
+	GlobalState.save_all_data()
+
+	# Update UI properly
+	var armor_panel = get_inventory_panel()
+	if armor_panel:
+		print("✅ InventoryPanel found, updating UI after equipping...")
+		armor_panel.update_inventory()
+	else:
+		print("❌ ERROR: InventoryPanel not found after equipping!")
+
+	# Update Armor Panel UI
+	var armor_ui = get_tree().get_first_node_in_group("armor_ui")
+	if armor_ui:
+		print("✅ Updating ArmorPanel UI for equipped item...")
+		armor_ui.equip_item_from_inventory(slot_type, item_name)
+	else:
+		print("❌ ERROR: ArmorPanel UI not found!")
+
+	print("✅ Finished equipping:", item_name)
+
+
+
+func get_slot_for_item_type(item_type: String) -> String:
+	match item_type:
+		"weapon", "pickaxe":
+			return "weapon"  # ✅ Pickaxes go in the weapon slot
+		"helm":
+			return "helm"
+		"chest":
+			return "chest"
+		"legs":
+			return "legs"
+		"shield":
+			return "shield"
+	return ""  # Invalid item type
+
+
+func update_inventory_panel():
+	if inventory_panel:
+		print("✅ Updating Inventory Panel...")
+		if inventory_panel.has_method("update_inventory_ui"):
+			inventory_panel.update_inventory_ui()
+		else:
+			print("❌ ERROR: InventoryPanel does not have update_inventory_ui()!")
+	else:
+		print("❌ ERROR: InventoryPanel not found!")

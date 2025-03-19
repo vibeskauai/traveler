@@ -1,31 +1,55 @@
 extends Panel
 
 @onready var player_stats = get_node("/root/PlayerStats")  # Reference to PlayerStats node
-@onready var inventory_panel = get_node("/root/TheCrossroads/MainUI/InventoryPanel")  # Reference to InventoryPanel
-@onready var inventory_grid = inventory_panel.get_node("GridContainer")  # Reference to GridContainer (fixed node path)
+@onready var inventory_grid = $InventoryPanel/GridContainer
+@onready var armor_panel = get_node("/root/TheCrossroads/MainUI/ArmorPanel")  # Reference to ArmorPanel
+
 
 const TOTAL_SLOTS = 28  # Max inventory slots
 var equipped_item: String = ""  # Track equipped item (if any)
 
-func _ready():
-	update_inventory()
-	# Populate inventory based on player stats
-	for item_name in player_stats.inventory.keys():
-		update_inventory_item(item_name)
+@onready var inventory_panel: Control = null  # Declare it for global use
 
-# ✅ **Refreshes the inventory UI**
-# ✅ Refresh inventory UI properly when equipping items
+func _ready():
+	print("🔍 Checking Inventory Panel...")
+
+	inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
+
+	if inventory_panel:
+		print("✅ InventoryPanel found dynamically!")
+	else:
+		print("❌ ERROR: InventoryPanel not found! Check scene structure.")
+
+	if inventory_panel and inventory_panel.has_node("GridContainer"):
+		inventory_grid = inventory_panel.get_node("GridContainer")
+		print("✅ GridContainer loaded successfully!")
+	else:
+		print("❌ ERROR: GridContainer not found in InventoryPanel!")
+
+
+# Refresh the inventory UI properly when equipping items
 func update_inventory_ui():
-	print("🔄 Updating Inventory UI...")
 	update_inventory()
-	
-	# ✅ Force Armor Panel update when equipping/unequipping
+
+	# Force Armor Panel update when equipping/unequipping
 	var armor_panel = get_tree().get_root().get_node("MainUI/ArmorPanel")
 	if armor_panel:
-		armor_panel.load_equipped_items()
+		armor_panel.load_equipped_items()  # This will update the equipped items UI
+
+	# Refresh the UI to reflect updated inventory and equipped items
+	if inventory_panel == null:
+		inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
+
+func update_inventory_panel():
+	print("🔄 Updating Inventory UI...")
+	update_inventory()  # ✅ Call the function that refreshes UI
+
 
 # ✅ **Update the inventory UI with exactly 28 slots**
 func update_inventory():
+	print("🔄 Updating Inventory UI...")
+
+	# Make sure the inventory panel is valid
 	if not inventory_grid:
 		print("❌ ERROR: Inventory grid not found!")
 		return
@@ -35,50 +59,47 @@ func update_inventory():
 		child.queue_free()
 
 	# Loop through the player's inventory and display items
-	for item_name in player_stats.inventory.keys():
-		var item_data = player_stats.inventory[item_name]
-		
-		# ✅ **Skip adding items with 0 or negative quantity**
-		if typeof(item_data) == TYPE_DICTIONARY and item_data.has("quantity") and item_data["quantity"] <= 0:
-			print("🗑️ Removing empty inventory slot for:", item_name)
-			continue  # Skip adding this item to UI
+	for item_name in GlobalState.inventory.keys():
+		var item_data = GlobalState.inventory[item_name]
 
-		# ✅ Create item button for inventory slot
+		# Skip empty inventory slots
+		if typeof(item_data) == TYPE_DICTIONARY and item_data.has("quantity") and item_data["quantity"] <= 0:
+			continue
+
+		# Create inventory button
 		var item_button = Button.new()
-		item_button.text = ""  # icon-only button
+		item_button.text = ""
 		item_button.custom_minimum_size = Vector2(64, 64)
 		item_button.flat = true
-		item_button.focus_mode = Control.FOCUS_NONE
-		item_button.name = item_name  # Assign the item_name as the button's name
+		item_button.name = item_name
 		item_button.connect("pressed", Callable(self, "_on_item_button_pressed").bind(item_name))
 
-		# ✅ Create and configure item icon
+		# Load item icon
 		var icon_rect = TextureRect.new()
 		icon_rect.stretch_mode = TextureRect.STRETCH_SCALE
 		icon_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		icon_rect.offset_left = -5
-		icon_rect.offset_top = -5
-		icon_rect.offset_right = -10
-		icon_rect.offset_bottom = -10
 
-		# ✅ Load texture for the item icon
 		var item_path = "res://assets/items/" + item_name + ".png"
 		if FileAccess.file_exists(item_path):
 			icon_rect.texture = load(item_path)
 		else:
-			icon_rect.texture = load("res://assets/ui/default_item.png")  # Default item icon
-		
-		# ✅ Add the icon to the button, then add button to inventory grid
+			icon_rect.texture = load("res://assets/ui/default_item.png")
+
+		# Add icon to button & button to inventory grid
 		item_button.add_child(icon_rect)
 		inventory_grid.add_child(item_button)
 
+		print("📌 Added item button for:", item_name)
+
+
 # ✅ **Updates inventory when an item is equipped or unequipped**
+# Update UI when item is equipped or unequipped
 func update_inventory_item(item_id: String) -> void:
 	var item_button = inventory_grid.find_child(item_id, true, false)  
 	if item_button:
 		var item_icon = item_button.get_child(0)  
 
-		# ✅ Remove equipped items from inventory display
+		# Remove equipped items from inventory display
 		if player_stats.equipped_items.has("weapon") and player_stats.equipped_items["weapon"] == item_id:
 			print("🎯 Removing weapon from inventory:", item_id)
 			item_button.queue_free()
@@ -105,9 +126,10 @@ func update_inventory_item(item_id: String) -> void:
 
 		else:
 			print("📌 Setting icon for item:", item_id)
-			item_icon.texture = get_item_icon(item_id)  
+			item_icon.texture = get_item_icon(item_id)  # Update the item icon
 	else:
 		print("❌ ERROR: Inventory slot not found for:", item_id)
+
 
 # ✅ **Retrieve the icon for a specific item**
 func get_item_icon(item_id: String) -> Texture:
@@ -119,53 +141,19 @@ func get_item_icon(item_id: String) -> Texture:
 func _on_item_button_pressed(item_name: String):
 	print("🖱️ [DEBUG] Item button pressed:", item_name)
 
-	if not player_stats:
-		print("❌ ERROR: PlayerStats not found!")
-		return
+	var player = get_tree().get_first_node_in_group("player")
+	if player and player.has_method("equip_item_from_inventory"):
+		print("✅ Calling equip_item_from_inventory() for:", item_name)
+		var item_type = GlobalState.get_item_type(item_name)
+		var slot_type = get_slot_for_item_type(item_type)
 
-	if not player_stats.inventory.has(item_name):
-		print("❌ ERROR: Item not found in inventory:", item_name)
-		return
-
-	# ✅ **Check if the item is already equipped**
-	if item_name in GlobalState.equipped_items.values():
-		print("🔄 Unequipping:", item_name)
-		if player_stats.has_method("unequip_item"):
-			player_stats.unequip_item(item_name)
+		if slot_type:
+			player.equip_item_from_inventory(item_name)
 		else:
-			print("❌ ERROR: unequip_item() function not found in PlayerStats!")
-
-	# ✅ **Equip item into correct slot**
+			print("❌ ERROR: No valid slot for", item_name)
 	else:
-		print("✅ Equipping:", item_name)
-		if player_stats.has_method("equip_item"):
-			var item_type = GlobalState.get_item_type(item_name)
-			var slot_type = get_slot_for_item_type(item_type)
+		print("❌ ERROR: equip_item_from_inventory() function not found in Player!")
 
-			if slot_type:
-				print("📌 Assigning", item_name, "to", slot_type)
-
-				# ✅ **Sync with GlobalState & Update Player**
-				GlobalState.equipped_items[slot_type] = item_name
-				GlobalState.inventory.erase(item_name)  # ✅ Remove from inventory
-				GlobalState.save_all_data()
-
-				# ✅ **Make sure the UI updates**
-				var armor_panel = get_tree().get_root().get_node("MainUI/ArmorPanel")
-				if armor_panel:
-					armor_panel.equip_item_from_inventory(slot_type, item_name)
-
-				# ✅ **Force Player to Update Pickaxe Visibility**
-				var player = get_tree().get_first_node_in_group("player")
-				if player:
-					player.update_pickaxe_visibility()
-			else:
-				print("❌ ERROR: No valid slot for", item_name)
-		else:
-			print("❌ ERROR: equip_item() function not found in PlayerStats!")
-
-	# ✅ **Ensure UI Refreshes**
-	update_inventory_ui()
 
 
 # ✅ Determines which slot an item should go into

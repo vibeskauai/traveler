@@ -19,7 +19,7 @@ texture = ExtResource("1_fdbdo")
 [node name="MainUI" type="CanvasLayer"]
 script = ExtResource("1_475mu")
 
-[node name="InventoryPanel" type="Panel" parent="."]
+[node name="InventoryPanel" type="Panel" parent="." groups=["inventory_ui"]]
 custom_minimum_size = Vector2(300, 400)
 anchors_preset = 3
 anchor_left = 1.0
@@ -154,6 +154,7 @@ size_flags_horizontal = 4
 show_percentage = false
 
 [node name="ArmorPanel" type="Panel" parent="."]
+visible = false
 custom_minimum_size = Vector2(300, 400)
 anchors_preset = 3
 anchor_left = 1.0

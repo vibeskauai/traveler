@@ -1,6 +1,7 @@
 extends Node
 
-@onready var inventory_ui = get_node("/root/TheCrossroads/MainUI/InventoryPanel")  # Reference to Inventory UI
+@onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
+@onready var armor_panel = get_node("/root/TheCrossroads/MainUI/ArmorPanel")  # Reference to ArmorPanel
 
 # Player stats variables
 var player_xp = 0          # Experience points
@@ -232,81 +233,30 @@ func get_item_type(item_name: String) -> String:
 		return GlobalState.item_types[item_name]
 	return "unknown"  # Default if item type is missing
 
+# PlayerStats.gd
 
-# Function to equip an item (weapon or armor)
-func equip_item(item_name: String):
-	print("📌 [DEBUG] equip_item() called for:", item_name)
+# Sync inventory and equipped items with GlobalState
+# PlayerStats.gd
 
-	if not inventory.has(item_name):
-		print("❌ ERROR: Item does not exist in inventory!")
-		return
+# Sync inventory and equipped items with GlobalState
+func sync_inventory_with_player():
+	# Sync the inventory and equipped items with GlobalState
+	GlobalState.inventory = inventory
+	GlobalState.equipped_items = equipped_items
 
-	if typeof(inventory[item_name]) != TYPE_DICTIONARY:
-		print("❌ ERROR: Inventory format incorrect for item:", item_name)
-		return
+	# Save data to GlobalState
+	GlobalState.save_all_data()
 
-	if inventory[item_name]["quantity"] <= 0:
-		print("❌ ERROR: Not enough quantity to equip:", item_name)
-		return
+	# Update the UI
+	if inventory_panel:
+		inventory_panel.update_inventory_panel()  # Ensure inventory is up to date
 
-	var item_type = inventory[item_name]["type"]
-	if item_type == "tool":
-		item_type = "pickaxe"  # ✅ Ensure correct category
-
-	if item_type in equipped_items.keys():
-		equipped_items[item_type] = item_name
-		print("✅ Equipped", item_type, ":", item_name)
-
-		# ✅ Remove from inventory
-		inventory[item_name]["quantity"] -= 1
-		if inventory[item_name]["quantity"] <= 0:
-			inventory.erase(item_name)
-
-		# ✅ Save the updated equipment to GlobalState
-		GlobalState.equipped_items = equipped_items
-		GlobalState.inventory = inventory
-		GlobalState.save_all_data()
-
-		sync_player_stats()
-		inventory_ui.update_inventory_ui()
-
-		print("📌 Updated Equipped Items:", equipped_items)
-		print("📌 Updated Inventory After Equipping:", inventory)
-
-		# ✅ Ensure Pickaxe Appears in Player's Hand
-		if "player" in get_tree().get_nodes_in_group("player"):
-			var player = get_tree().get_nodes_in_group("player")[0]
-			player.update_pickaxe_visibility()
+	if armor_panel:
+		armor_panel.load_equipped_items()  # Ensure armor panel is updated
 	else:
-		print("❌ ERROR: Invalid item type:", item_type)
+		print("❌ ERROR: ArmorPanel not found!")
 
-func unequip_item(item_name: String):
-	for slot in equipped_items.keys():
-		if equipped_items[slot] == item_name:
-			print("❎ Unequipped", slot, ":", item_name)
-			equipped_items[slot] = null  # ✅ Remove from equipped items
-
-			# ✅ Return the item to inventory when unequipping
-			if inventory.has(item_name):
-				inventory[item_name]["quantity"] += 1
-			else:
-				inventory[item_name] = { "type": get_item_type(item_name), "quantity": 1 }
-
-			# ✅ Save the updated equipment to GlobalState
-			GlobalState.equipped_items = equipped_items
-			GlobalState.inventory = inventory
-			GlobalState.save_all_data()
-
-			sync_player_stats()
-			inventory_ui.update_inventory_ui()
-
-			print("📌 Updated Equipped Items After Unequipping:", equipped_items)
-			print("📌 Updated Inventory After Unequipping:", inventory)
-			return
-
-	print("❌ ERROR: No such item equipped:", item_name)
-
-
+	print("🔄 Inventory and Equipped Items synced and UI updated.")
 
 # Get the currently equipped item (for UI display, etc.)
 func get_equipped_item(item_type: String) -> String:
@@ -325,3 +275,122 @@ func _process(delta):
 	if Input.is_action_pressed("save_game"):  # Make sure to add this action in Input Map
 		GlobalState.save_all_data()  # Save data manually
 		print("Game saved manually.")
+
+# Equip an item from the inventory to the specified slot
+func equip_item(item_name: String):
+	if not inventory.has(item_name):
+		print("❌ ERROR: Item not found in inventory:", item_name)
+		return
+
+	var item_type = GlobalState.get_item_type(item_name)
+	var slot_type = get_slot_for_item_type(item_type)
+
+	if not slot_type:
+		print("❌ ERROR: No valid slot for", item_name)
+		return
+
+	print("📌 Equipping", item_name, "to", slot_type)
+
+	# ✅ Ensure slot is empty before equipping
+	if equipped_items.has(slot_type) and equipped_items[slot_type] != "":
+		print("❌ ERROR: Slot", slot_type, "is already occupied by", equipped_items[slot_type])
+		return
+
+	# ✅ Equip the item
+	equipped_items[slot_type] = item_name
+	GlobalState.equipped_items[slot_type] = item_name
+	GlobalState.inventory.erase(item_name)  # ✅ Remove from inventory
+	GlobalState.save_all_data()
+
+	# ✅ Update UI
+	print("🔄 Updating Armor & Inventory UI after equip")
+	var armor_panel = get_tree().get_first_node_in_group("armor_ui")
+	if armor_panel:
+		print("✅ ArmorPanel found, updating equipped items")
+		armor_panel.load_equipped_items()
+	else:
+		print("❌ ERROR: ArmorPanel UI not found!")
+
+	if inventory_panel == null:
+		inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
+
+
+	print("✅ Finished equipping:", item_name)
+
+
+
+func unequip_item(item_name: String):
+	var slot_type = ""
+	for slot in equipped_items.keys():
+		if equipped_items[slot] == item_name:
+			slot_type = slot
+			break
+
+	if slot_type == "":
+		print("❌ ERROR: Item", item_name, "not found in equipped items")
+		return
+
+	# ✅ Return item to inventory
+	if inventory.has(item_name):
+		inventory[item_name]["quantity"] += 1
+	else:
+		inventory[item_name] = {"quantity": 1, "type": GlobalState.get_item_type(item_name)}
+
+	# ✅ Remove from equipped items
+	equipped_items[slot_type] = ""
+	GlobalState.equipped_items[slot_type] = ""
+	GlobalState.save_all_data()
+
+	# ✅ Update UI
+	var armor_panel = get_tree().get_first_node_in_group("armor_ui")
+	if armor_panel:
+		armor_panel.load_equipped_items()
+
+	var inventory_panel = get_tree().get_first_node_in_group("inventory_ui")
+	if inventory_panel:
+		inventory_panel.update_inventory_ui()
+
+	print("❎ Unequipped", item_name, "from", slot_type)
+
+
+
+
+# Function to return the correct slot type for an item
+func get_slot_for_item_type(item_type: String) -> String:
+	match item_type:
+		"weapon", "pickaxe":  # Pickaxes are also considered weapons
+			return "weapon"
+		"helm":
+			return "helm"
+		"chest":
+			return "chest"
+		"legs":
+			return "legs"
+		"shield":
+			return "shield"
+	return ""
+
+# Function to refresh the inventory UI
+func update_inventory_ui():
+	if inventory_panel == null:
+		inventory_panel = get_tree().get_root().find_child("InventoryPanel", true, false)
+
+
+# Function to update the visibility of the pickaxe in the player's hand
+func update_pickaxe_visibility():
+	# Get the currently equipped weapon (e.g., pickaxe)
+	var equipped_weapon = GlobalState.equipped_items.get("weapon", null)
+
+	# Check if the equipped weapon is a pickaxe
+	if equipped_weapon and GlobalState.get_item_type(equipped_weapon) == "pickaxe":
+		# Show pickaxe sprite and set its texture
+		var pickaxe_sprite = get_node_or_null("PickaxeSprite")
+		if pickaxe_sprite:
+			pickaxe_sprite.visible = true
+			pickaxe_sprite.texture = load("res://assets/items/" + equipped_weapon + ".png")
+	else:
+		# Hide the pickaxe sprite if not equipped
+		var pickaxe_sprite = get_node_or_null("PickaxeSprite")
+		if pickaxe_sprite:
+			pickaxe_sprite.visible = false
+			pickaxe_sprite.texture = null

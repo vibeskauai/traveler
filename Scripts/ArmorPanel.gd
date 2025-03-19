@@ -5,6 +5,8 @@ extends Control
 @onready var weapon_slot = $VBoxContainer/ChestRow/WeaponSlot
 @onready var shield_slot = $VBoxContainer/ChestRow/ShieldSlot
 @onready var legs_slot = $VBoxContainer/LegsSlot
+@onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")
+
 
 var equipped_items = {
 	"weapon": null,
@@ -19,34 +21,35 @@ func _ready():
 	connect_slots()
 
 # ✅ **Load equipped items from GlobalState & update UI**
+# Load equipped items from GlobalState & update UI
 func load_equipped_items():
-	# ✅ Ensure equipped_items is always a valid dictionary
+	# Ensure equipped_items is always a valid dictionary
 	equipped_items = GlobalState.equipped_items if GlobalState.equipped_items else {}
 
-	# ✅ Debugging: Print equipped items when loading UI
-	print("📂 Loading Equipped Items in Armor Panel:", equipped_items)
-
-	# ✅ Default values to prevent `null` issues
+	# Default values to prevent `null` issues
 	var default_slots = {
 		"weapon": "",
 		"helm": "",
 		"chest": "",
 		"legs": "",
 		"shield": "",
-		"pickaxe": ""  # ✅ Pickaxe is included in case it's needed
+		"pickaxe": ""  # Pickaxe is included in case it's needed
 	}
 
-	# ✅ Replace `null` values with an empty string `""`
+	# Replace null values with empty strings
 	for slot in default_slots.keys():
 		if not equipped_items.has(slot) or equipped_items[slot] == null:
 			equipped_items[slot] = default_slots[slot]
 
-	# ✅ Update UI slots safely (prevents errors)
+	# Update UI slots safely (prevents errors)
 	update_slot(weapon_slot, equipped_items["weapon"])
 	update_slot(helm_slot, equipped_items["helm"])
 	update_slot(chest_slot, equipped_items["chest"])
 	update_slot(legs_slot, equipped_items["legs"])
 	update_slot(shield_slot, equipped_items["shield"])
+
+	print("📂 Loaded Equipped Items in Armor Panel:", equipped_items)
+
 
 # ✅ **Connect slot buttons to click event**
 func connect_slots():
@@ -95,35 +98,47 @@ func _on_slot_clicked(slot_type: String):
 
 
 # ✅ **Unequip an item and return it to the inventory**
+# Unequip an item and return it to the inventory
 func unequip_item(slot_type: String):
-	var item = equipped_items[slot_type]
+	var item = equipped_items.get(slot_type, null)
 	if item:
 		print("❎ Unequipping:", item, "from", slot_type)
 
-		# ✅ Make sure item goes BACK into the inventory
+		# Add the item back to the inventory
 		if GlobalState.inventory.has(item):
-			GlobalState.inventory[item]["quantity"] += 1  # ✅ Add back the quantity
+			GlobalState.inventory[item]["quantity"] += 1
 		else:
 			GlobalState.inventory[item] = {"quantity": 1, "type": GlobalState.get_item_type(item)}
 
-		# ✅ Remove item from equipped slot
+		# Remove item from equipped slot
 		equipped_items[slot_type] = null
-		GlobalState.equipped_items = equipped_items
-
-		# ✅ Update UI Slot
-		update_slot(get_slot_by_type(slot_type), "[Empty]")
-		
-		# ✅ Force an Inventory UI update to ensure the item appears back
-		var inventory_panel = get_tree().get_root().get_node("MainUI/InventoryPanel")
-		if inventory_panel:
-			inventory_panel.update_inventory_ui()
-			print("📌 Pickaxe returned to inventory.")
-
+		GlobalState.equipped_items[slot_type] = null
 		GlobalState.save_all_data()
 
+		# Update UI
+		var slot = get_slot_by_type(slot_type)
+		if slot:
+			update_slot(slot, "")
 
-# ✅ Equip an item from inventory & update UI correctly
-# ✅ Equip an item from inventory & update UI correctly
+		# **Ensure Inventory UI Updates**
+		var inventory_panel = get_inventory_panel()
+		if inventory_panel:
+			print("✅ InventoryPanel found, updating UI...")
+			inventory_panel.update_inventory()
+		else:
+			print("❌ ERROR: InventoryPanel not found during unequip!")
+
+func get_inventory_panel():
+	var ui_root = get_tree().get_root().find_child("MainUI", true, false)
+	if ui_root:
+		var inventory = ui_root.find_child("InventoryPanel", true, false)
+		if inventory:
+			print("✅ InventoryPanel found dynamically!")
+			return inventory
+	print("❌ ERROR: InventoryPanel NOT found!")
+	return null
+
+# Equip item from inventory & update UI correctly
 func equip_item_from_inventory(slot_type: String, item_name: String):
 	if equipped_items.get(slot_type):
 		print("❌ Slot already occupied:", slot_type)
@@ -137,7 +152,8 @@ func equip_item_from_inventory(slot_type: String, item_name: String):
 
 	# ✅ Equip the item
 	equipped_items[slot_type] = item_name
-	GlobalState.equipped_items = equipped_items
+	GlobalState.equipped_items[slot_type] = item_name
+	GlobalState.save_all_data()
 
 	# ✅ Force UI update after equipping
 	var slot = get_slot_by_type(slot_type)
@@ -147,7 +163,16 @@ func equip_item_from_inventory(slot_type: String, item_name: String):
 	else:
 		print("❌ ERROR: Slot not found for type:", slot_type)
 
-	GlobalState.save_all_data()
+	# ✅ **Ensure Inventory UI Updates**
+	var inventory_panel = get_inventory_panel()
+	if inventory_panel:
+		print("✅ InventoryPanel found, updating UI...")
+		inventory_panel.update_inventory()
+	else:
+		print("❌ ERROR: InventoryPanel not found!")
+
+
+
 
 
 # ✅ **Find an available item in inventory for a specific slot**
@@ -167,47 +192,43 @@ func get_item_from_inventory(slot_type: String) -> String:
 			return item
 	return ""
 
-# ✅ Update UI slot with the equipped item (removes EMPTY text)
 func update_slot(slot: Button, item_name: String):
 	if not slot:
 		print("❌ ERROR: Slot reference is NULL!")
 		return
 
-	# ✅ Clear previous children to avoid duplicates
+	# ✅ Remove previous children (avoid duplicates)
 	for child in slot.get_children():
 		child.queue_free()
 
-	# ✅ If item exists, load its icon
-	if item_name and typeof(item_name) == TYPE_STRING and item_name != "":
+	# ✅ If an item is equipped, show the icon
+	if item_name and item_name != "":
 		var icon_texture = get_item_icon(item_name)
-
 		if icon_texture:
 			var icon_rect = TextureRect.new()
 			icon_rect.texture = icon_texture
 			icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			icon_rect.custom_minimum_size = Vector2(64, 64)  # ✅ Adjust as needed
-			slot.add_child(icon_rect)  # ✅ Add icon to slot
-			print("📌 Displaying icon for:", item_name)
-		else:
-			print("⚠️ No icon found for:", item_name)
+			icon_rect.custom_minimum_size = Vector2(64, 64)
+			slot.add_child(icon_rect)
 
-		# ✅ Ensure no text is displayed when an item is equipped
+		# ✅ Ensure no text is displayed
 		slot.text = ""
 
 	else:
-		# ✅ No item equipped → Set to "[Empty]" with no icon
-		slot.text = ""
-		print("✅ Slot now empty:", slot.name)
+		# ✅ Ensure slot is empty with NO "[Empty]" message
+		slot.text = ""  # ✅ No empty text
+		print("✅ Slot now fully empty:", slot.name)
 
 
+
+# Get the item icon for a given item name
 func get_item_icon(item_name: String) -> Texture:
 	var item_path = "res://assets/items/" + item_name + ".png"
 	if FileAccess.file_exists(item_path):
-		return load(item_path)  # ✅ Load the actual item icon
+		return load(item_path)  # Load the actual item icon
 	else:
 		print("⚠️ Missing icon for:", item_name)
-		return load("res://assets/ui/default_item.png")  # ✅ Use a default icon
-
+		return load("res://assets/ui/default_item.png")  # Use a default icon
 
 # ✅ **Returns the corresponding slot node**
 func get_slot_by_type(slot_type: String) -> Button:

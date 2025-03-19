@@ -153,7 +153,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 show_percentage = false
 
-[node name="ArmorPanel" type="Panel" parent="."]
+[node name="ArmorPanel" type="Panel" parent="." groups=["armor_ui"]]
 visible = false
 custom_minimum_size = Vector2(300, 400)
 anchors_preset = 3

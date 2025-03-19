@@ -380,6 +380,13 @@ func get_inventory_panel():
 	print("❌ ERROR: InventoryPanel NOT found!")
 	return null
 
+func get_armor_panel():
+	var armor_panel = get_tree().get_first_node_in_group("armor_ui")
+	if armor_panel:
+		return armor_panel
+	else:
+		print("❌ ERROR: ArmorPanel UI not found in scene tree!")
+		return null
 
 # Function to add the item to the inventory
 func add_item_to_inventory(item_name: String, item_type: String):
@@ -531,23 +538,16 @@ func equip_item_from_inventory(item_name: String):
 	GlobalState.equipped_items[slot_type] = item_name
 	GlobalState.save_all_data()
 
-	# Update UI properly
-	var armor_panel = get_inventory_panel()
-	if armor_panel:
-		print("✅ InventoryPanel found, updating UI after equipping...")
-		armor_panel.update_inventory()
-	else:
-		print("❌ ERROR: InventoryPanel not found after equipping!")
-
-	# Update Armor Panel UI
-	var armor_ui = get_tree().get_first_node_in_group("armor_ui")
+	# ✅ Find the ArmorPanel safely
+	var armor_ui = get_armor_panel()
 	if armor_ui:
-		print("✅ Updating ArmorPanel UI for equipped item...")
+		print("✅ Updating ArmorPanel UI after equipping:", item_name)
 		armor_ui.equip_item_from_inventory(slot_type, item_name)
 	else:
-		print("❌ ERROR: ArmorPanel UI not found!")
+		print("❌ ERROR: ArmorPanel still not found!")
 
 	print("✅ Finished equipping:", item_name)
+
 
 
 

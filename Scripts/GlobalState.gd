@@ -13,7 +13,7 @@ var player_xp = 0  # Player experience points
 var total_level = 1  # Starting level
 var health = 100  # Player health
 
-# NEW: Last facing direction (defaulting to facing right)
+# NEW: Last facing direction 
 var last_facing_direction = Vector2(0, 1)  # Default value to "down" (0,1)
 
 # Skill progression data (Mining, Herbalism, Combat)

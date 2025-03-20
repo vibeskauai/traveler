@@ -227,28 +227,28 @@ func sync_with_global_state():
 
 	print("✅ Synced PlayerStats with GlobalState")
 
-# Function to add an item to the player's inventory
-func add_item_to_inventory(item_name: String):
-	if item_name in inventory:
-		if typeof(inventory[item_name]) == TYPE_DICTIONARY:
-			inventory[item_name]["quantity"] += 1
-		else:
-			print("⚠️ Converting old inventory format for:", item_name)
-			inventory[item_name] = {
-				"quantity": 1,
-				"type": get_item_type(item_name)  # ✅ Fetch correct type
-			}
+# Declare the signal in PlayerStats.gd
+signal inventory_updated
+func add_item_to_inventory(item_name: String, quantity: int):
+	# Normalize item name by removing any potential suffix like "_ore" from the ore type
+	var normalized_name = item_name.replace("_ore", "")  # Ensure consistent naming
+
+	# Check if item is already in inventory
+	if inventory.has(normalized_name):
+		inventory[normalized_name]["quantity"] += quantity  # Increase quantity
 	else:
-		inventory[item_name] = {
-			"quantity": 1,
-			"type": get_item_type(item_name)  # ✅ Ensure type is set
+		inventory[normalized_name] = {
+			"quantity": quantity,
+			"type": "ore"  # Set type as "ore"
 		}
 
-	# ✅ Sync with GlobalState
+	  # Emit the signal to notify the UI to update
+	emit_signal("inventory_updated")
+	# Sync with GlobalState or save the updated inventory
 	GlobalState.inventory = inventory
 	GlobalState.save_all_data()
-	print("📌 Updated Inventory:", inventory)
 
+	print("📌 Updated Inventory:", inventory)
 
 # ✅ Get item type from GlobalState
 func get_item_type(item_name: String) -> String:

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bamhi8k0ijgtl"
-path="res://.godot/imported/rune_ore.png-14c58af82aea7e0c5cb7a037e3b50910.ctex"
+uid="uid://cadnae6itk32q"
+path="res://.godot/imported/gold.png-ce9bc2bcc5f32f94cd225efccf5041be.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/rune_ore.png"
-dest_files=["res://.godot/imported/rune_ore.png-14c58af82aea7e0c5cb7a037e3b50910.ctex"]
+source_file="res://assets/items/gold.png"
+dest_files=["res://.godot/imported/gold.png-ce9bc2bcc5f32f94cd225efccf5041be.ctex"]
 
 [params]
 

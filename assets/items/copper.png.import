@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bs402ihx756rl"
-path="res://.godot/imported/dragon_ore.png-4b862a02b4361eb811e38640b8e86bb4.ctex"
+uid="uid://yv0dk1035hjb"
+path="res://.godot/imported/copper.png-dda051460f62a32600dd742f384aeff2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/dragon_ore.png"
-dest_files=["res://.godot/imported/dragon_ore.png-4b862a02b4361eb811e38640b8e86bb4.ctex"]
+source_file="res://assets/items/copper.png"
+dest_files=["res://.godot/imported/copper.png-dda051460f62a32600dd742f384aeff2.ctex"]
 
 [params]
 

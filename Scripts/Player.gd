@@ -437,7 +437,7 @@ func mine_target_ore():
 
 # Detects collision with ores during swing
 func _on_pickaxe_hit(area):
-	if area and area.is_in_group("ore"):
+	if area and area.is_in_group("ores"):
 		var ore = area.get_parent()
 		var equipped_pickaxe = PlayerStats.get_equipped_item("pickaxe")
 

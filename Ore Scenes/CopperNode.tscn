@@ -5,16 +5,21 @@
 [ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_gyk37"]
 [ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_8gff0"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_e0kxw"]
-radius = 8.51469
-
 [sub_resource type="CircleShape2D" id="CircleShape2D_uymim"]
 radius = 11.0454
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_e0kxw"]
+radius = 8.51469
 
 [node name="CopperOre" type="StaticBody2D" groups=["ores"]]
 scale = Vector2(0.882295, 0.882295)
 collision_layer = 2
 script = ExtResource("1_uymim")
+ore_type = "copper"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+z_index = -1
+shape = SubResource("CircleShape2D_uymim")
 
 [node name="Sprite2D" type="Sprite2D" parent="." groups=["ores"]]
 scale = Vector2(1.01665, 1.01665)
@@ -46,6 +51,3 @@ volume_db = -2.0
 
 [node name="BreakSound" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_8gff0")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_uymim")

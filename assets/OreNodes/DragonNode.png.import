@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8uqcx1yqlnat"
-path="res://.godot/imported/RuneNode.png-75c2dadd4a30d43b055d47136ffdfbbf.ctex"
+uid="uid://bre86j3t50ocd"
+path="res://.godot/imported/DragonNode.png-7d73da12346e391f4ed2918a85e226be.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Ore Nodes/RuneNode.png"
-dest_files=["res://.godot/imported/RuneNode.png-75c2dadd4a30d43b055d47136ffdfbbf.ctex"]
+source_file="res://assets/OreNodes/DragonNode.png"
+dest_files=["res://.godot/imported/DragonNode.png-7d73da12346e391f4ed2918a85e226be.ctex"]
 
 [params]
 

@@ -2667,11 +2667,9 @@ position = Vector2(-13, 69)
 
 [node name="SilverOre" parent="." instance=ExtResource("14_mykux")]
 position = Vector2(67, 428)
-ore_type = "silver"
 
 [node name="SilverOre5" parent="." instance=ExtResource("14_mykux")]
 position = Vector2(13, 429)
-ore_type = "silver"
 
 [node name="Ore16" parent="." instance=ExtResource("15_w0rdw")]
 position = Vector2(-96, 277)
@@ -2682,7 +2680,7 @@ position = Vector2(-94, 99)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore49" parent="." instance=ExtResource("15_w0rdw")]
-position = Vector2(-18, 132)
+position = Vector2(-46, 111)
 scale = Vector2(0.85366, 0.885522)
 
 [node name="Ore18" parent="." instance=ExtResource("15_w0rdw")]
@@ -3235,7 +3233,6 @@ position = Vector2(204, -219)
 
 [node name="SilverOre2" parent="." instance=ExtResource("14_mykux")]
 position = Vector2(3, 401)
-ore_type = "silver"
 
 [node name="CrossroadsToMines" type="Area2D" parent="."]
 position = Vector2(38, 21)
@@ -3253,3 +3250,6 @@ rotation = 4.71239
 
 [node name="CopperOre5" parent="." instance=ExtResource("15_w0rdw")]
 position = Vector2(-22, 170)
+
+[node name="CopperOre6" parent="." instance=ExtResource("15_w0rdw")]
+position = Vector2(-19, 133)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5c5cr23le83j"
-path="res://.godot/imported/SilverNode.png-cf1fa6a0fb49f17683ca59cea51e7210.ctex"
+uid="uid://c8iby7ryvral2"
+path="res://.godot/imported/CopperNode.png-ea5c071b2dac3d80035ef606f1a37b89.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Ore Nodes/SilverNode.png"
-dest_files=["res://.godot/imported/SilverNode.png-cf1fa6a0fb49f17683ca59cea51e7210.ctex"]
+source_file="res://assets/OreNodes/CopperNode.png"
+dest_files=["res://.godot/imported/CopperNode.png-ea5c071b2dac3d80035ef606f1a37b89.ctex"]
 
 [params]
 

@@ -360,7 +360,6 @@ func unequip_item(slot_type: String):
 	update_ui()
 	player.update_pickaxe_visibility()
 
-
 # Function to return the correct slot type for an item
 func get_slot_by_type(item_type: String) -> String:
 	match item_type:

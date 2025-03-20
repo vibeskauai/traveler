@@ -286,6 +286,7 @@ script = ExtResource("3_dewec")
 target_position = Vector2(0, 20)
 
 [node name="PickaxeSprite" type="Sprite2D" parent="."]
+visible = false
 z_index = 1
 position = Vector2(-13, 5)
 rotation = -1.93142

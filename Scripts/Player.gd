@@ -444,18 +444,3 @@ func _on_pickaxe_hit(area):
 		if equipped_pickaxe:
 			print("⛏️ Mining with:", equipped_pickaxe)
 			ore.mine_ore(equipped_pickaxe, self)  # Send pickaxe name and player reference
-
-# Function to play mining animation based on the direction the player is facing
-func play_mining_animation():
-	# Ensure the correct animation plays based on last direction and ore type
-	if last_direction == "walk_right":
-		animated_sprite.play("mining_right")  # Play mining animation facing right
-	elif last_direction == "walk_left":
-		animated_sprite.play("mining_left")  # Play mining animation facing left
-	elif last_direction == "walk_down":
-		animated_sprite.play("mining_down")  # Play mining animation facing down
-	elif last_direction == "walk_up":
-		animated_sprite.play("mining_up")  # Play mining animation facing up
-	else:
-		# Default to right-facing mining animation if no direction is found
-		animated_sprite.play("mining_right")

@@ -2639,9 +2639,6 @@ script = ExtResource("1_mtni4")
 
 [node name="MainUI" parent="." instance=ExtResource("4_pfwsi")]
 
-[node name="Player" parent="." instance=ExtResource("2_1al20")]
-position = Vector2(42, -47)
-
 [node name="Grass" type="TileMap" parent="."]
 z_index = -1
 position = Vector2(31, 18)
@@ -3259,3 +3256,6 @@ position = Vector2(69, 522)
 
 [node name="RockWall31" parent="RocksFolder" instance=ExtResource("16_5pthx")]
 position = Vector2(-120, 426)
+
+[node name="Player" parent="." instance=ExtResource("2_1al20")]
+position = Vector2(38, -28)

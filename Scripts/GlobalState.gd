@@ -3,7 +3,6 @@ extends Node
 @onready var player = get_tree().get_first_node_in_group("player")
 @onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
 @onready var player_stats = get_node("/root/PlayerStats")  # Access PlayerStats for syncing equipped items
-
 signal new_game_started(new_position: Vector2)
 
 # Player-related data
@@ -60,9 +59,6 @@ func get_item_type(item_name: String) -> String:
 		return item_types[item_name]
 	return "unknown"  # Default to unknown if not defined
 
-# Global data variables for storing mined ores (positions and ore types)
-var mined_ores = {}  # Key: position (Vector2), Value: ore_type
-
 # Game progress data
 var has_spoken_to_durmil = false
 var has_upgraded_pickaxe = false
@@ -76,6 +72,9 @@ var save_file_path = "user://game_data.json"
 
 # Called when the game starts
 func _ready():
+
+	if not has_meta("mined_ores"):
+		set_meta("mined_ores", {})  # Initialize an empty dictionary if it's not found
 	autosave_timer = Timer.new()
 	add_child(autosave_timer)
 	autosave_timer.wait_time = 10  # Set autosave interval to 10 seconds
@@ -173,8 +172,6 @@ func save_all_data():
 		file.store_string(json_data)
 		file.close()
 
-
-## Load all game data from a file
 # Load all game data from a file
 func load_game_data():
 	if not FileAccess.file_exists(save_file_path):
@@ -191,7 +188,7 @@ func load_game_data():
 		
 		if parse_result == OK:
 			var data = json.get_data()
-
+			
 			# Load Player Position
 			var position_string = data.get("player_position", "0,0")
 			var position_array = position_string.split(",")
@@ -222,23 +219,27 @@ func load_game_data():
 			has_spoken_to_durmil = data.get("has_spoken_to_durmil", false)
 			has_upgraded_pickaxe = data.get("has_upgraded_pickaxe", false)
 
-			# Load Mined Ores - Debugging if it's correctly loaded
-			mined_ores = data.get("mined_ores", {})
-			
-			# Normalize position keys for mined_ores
-			var normalized_mined_ores = {}
-			for position_str in mined_ores.keys():
-				# Remove parentheses if present and normalize to "x,y" format
-				var normalized_position = position_str.replace("(", "").replace(")", "")  # Clean up the parentheses
-				normalized_mined_ores[normalized_position] = mined_ores[position_str]
+			# Load Mined Ores
+			mined_ores = data.get("mined_ores", {})  # Load the mined ores or initialize as empty
+			print("✅ Loaded mined ores:", mined_ores)
 
-			mined_ores = normalized_mined_ores
+			# Remove mined ore nodes from the scene (using the "ores" group)
+			var ores = get_tree().get_nodes_in_group("ores")  # Access all nodes in the "ores" group
+			if ores:
+				for node in ores:
+					print("Node Name:", node.name)  # Debug: Print the node name
+					print("Node Type:", node.get_class())  # Debug: Print the node type
+					
+					# Check if the node is a StaticBody2D (which should be your ore nodes)
+					if node is StaticBody2D and node.name.begins_with("CopperNode"):  # Ensure it's a StaticBody2D
+						var position_str = str(node.global_transform.origin.x) + "," + str(node.global_transform.origin.y)
 
-			print("📌 [GlobalState] Loaded Mined Ores:", mined_ores)  # Debugging: see if mined_ores is correctly loaded
-
-		else:
-			print("❌ Error parsing saved data: ", json.get_error_message())
-
+						# If the ore has been mined (exists in mined_ores), remove it from the scene
+						if mined_ores.has(position_str):
+							print("❌ Ore node found at position", node.global_transform.origin, "is mined, removing.")
+							node.queue_free()  # Remove the ore node from the scene
+						else:
+							print("✅ Ore node at position", node.global_transform.origin, "is not mined.")
 		file.close()
 	else:
 		print("⚠️ Failed to open save file.")
@@ -258,8 +259,6 @@ func load_game_data():
 		var player = get_tree().get_root().get_node("TheCrossroads/Player")
 		player.call_deferred("update_pickaxe_visibility")  # ✅ Ensure player updates pickaxe visibility
 		print("✅ Player visibility updated after game load!")
-
-
 
 # Function for autosave (called every interval)
 func _on_autosave_timeout():
@@ -295,51 +294,62 @@ func update_inventory(item_name, add_item: bool):
 		inventory.erase(item_name)
 	save_all_data()
 
-# Save mined ore with position and type
-func save_mined_ore(position: Vector2, ore_type: String):
-	# Ensure ore_type is correctly passed
-	if ore_type == "":
-		print("❌ Ore type is empty! This should be corrected.")
-		return  # Do not save if ore type is empty (error handling)
 
-	# Convert position to string as a key (Vector2 doesn't work directly with JSON)
-	var position_str = str(position.x).strip_edges() + "," + str(position.y).strip_edges()
+var mined_ores = {}  # Dictionary to track mined ores
 
-	# Save the ore type at this position
+# Save the mined ore state and remove the node
+func save_mined_ore(position: Vector2, ore_type: String, ore_node: Node):
+	var position_str = str(position.x) + "," + str(position.y)
+
+	# Debug: Print the current state of mined_ores before saving
+	print("🔄 Saving mined ore at position:", position_str, "with type:", ore_type)
+	print("📌 Current mined_ores before saving:", mined_ores)
+
+	# Save the ore type at the position
 	mined_ores[position_str] = ore_type
 
-	# Debugging: Print out the saved data to ensure it's correct
-	print("✅ [GlobalState] Saving mined ore at position:", position_str, "with type:", ore_type)
+	# Debug: Print the state of mined_ores after saving
+	print("📌 Current mined_ores after saving:", mined_ores)
 
-	# Sync with save system
-	save_all_data()
+	# Save the global data persistently
+	save_all_data()  # Save the global data persistently
+	print("✅ Mined ore saved successfully.")
 
-
-# Load saved mined ores from file or global state
-func load_mined_ores():
-	# Load mined_ores from the save file
-	print("🔄 Loading mined ores...")
-
-	var file = FileAccess.open("user://mined_ores.save", FileAccess.READ)
-	if file:
-		var loaded_data = file.get_as_text()
-		var json = JSON.new()
-		var parse_result = json.parse(loaded_data)
-		if parse_result == OK:
-			mined_ores = json.get_data()
-
-			# Debugging: Print the loaded ores to verify
-			print("✅ [GlobalState] Loaded mined ores:", mined_ores)
-		else:
-			print("❌ Error parsing saved mined ores data.")
-		file.close()
-	else:
-		print("⚠️ No mined ores file found. Initializing empty.")
-		mined_ores = {}
-
-	# Debugging: Verify loaded ores after checking
-	print("🔄 Current mined ores:", mined_ores)
+	# Ensure the node is removed after saving
+	if ore_node:
+		print("✅ Removing ore node:", ore_node.name)
+		ore_node.queue_free()  # Remove the ore node from the scene
+		print("✅ Ore node removed from the scene.")
 
 
-func is_ore_mined(position: Vector2) -> bool:
-	return mined_ores.has(position)
+# Remove mined ores from TheCrossroads scene
+func remove_mined_ores(the_crossroads: Node):
+	# Ensure the_crossroads is valid
+	if the_crossroads == null:
+		print("❌ TheCrossroads node is null!")
+		return
+
+	# Loop through all child nodes in TheCrossroads scene
+	for node in the_crossroads.get_children():
+		if node.name.begins_with("CopperNode"):  # Target ore nodes like CopperNode1, CopperNode2, etc.
+			
+			# Debug: Print the node type
+			print("Node Type: ", node, "Type:", node.get_class())
+
+			# Check if the node is a StaticBody2D (since global_position is not available directly)
+			if node is StaticBody2D:
+				# Get position from transform.origin for StaticBody2D
+				var position_str = str(node.global_transform.origin.x) + "," + str(node.global_transform.origin.y)
+
+				# Check if this ore has been mined (using GlobalState's mined_ores)
+				if mined_ores.has(position_str):
+					print("❌ Ore at position", node.global_transform.origin, "is already mined, removing.")
+					
+					# Save the ore before removing it
+					save_mined_ore(node.global_transform.origin, "copper_ore", node)  # Save and remove the node
+
+					continue  # Skip processing this ore since it's mined
+
+				print("✅ Ore at position", node.global_transform.origin, "is not mined.")
+			else:
+				print("❌ Node is not of type StaticBody2D and doesn't have global_position:", node.name)

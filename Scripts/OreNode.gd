@@ -11,7 +11,6 @@ extends StaticBody2D  # Keeps ore solid and interactable
 @export var ore_type: String = ""  # Will be set based on the scene name (e.g., "CopperNode" -> "copper_ore")
 @export var collision_removal_delay: float = 0.1  # Set a default removal delay
 
-
 var ore_health: int  # Ore health value
 
 # Flag for auto-mining
@@ -73,7 +72,6 @@ func _ready():
 
 	# Ensure the sprite texture is loaded correctly
 	var texture_path = "res://assets/OreNodes/" + ore_type + ".png"
-	print("Loading texture for:", texture_path)
 
 	# Load texture for the ore sprite
 	if FileAccess.file_exists(texture_path):
@@ -81,7 +79,6 @@ func _ready():
 		print("✅ Loaded texture for:", ore_type)
 	else:
 		sprite.texture = load("res://assets/OreNodes/CopperNode.png")  # Fallback to default texture if not found
-		print("❌ Texture not found, using default for:", ore_type)
 
 	# Connect hitbox area detection
 	if hitbox:
@@ -212,8 +209,6 @@ func break_ore():
 	player_stats.add_item_to_inventory(ore_name, drop_amount)  # Add the ore resource to the inventory
 	print("📌 Added", drop_amount, ore_name, "to inventory")
 
-	# Update the GlobalState to mark the ore as mined
-	global_state.save_mined_ore(global_position, ore_type)
 
 	print("✅ Ore destroyed and removed from scene!")
 
@@ -228,5 +223,5 @@ func break_ore():
 	if break_sound and is_inside_tree():
 		break_sound.play()  # Play break sound
 		await break_sound.finished  # Wait for the sound to finish before proceeding
-
+	GlobalState.save_mined_ore(global_position, ore_type, self)  # Pass 'self' as the third argument
 	queue_free()  # Destroy the ore node after it's mined

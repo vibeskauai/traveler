@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b3vttbtnheq15"
-path="res://.godot/imported/silver.png-226d29b0a98e099e21ed8d742786dbc3.ctex"
+uid="uid://yv0dk1035hjb"
+path="res://.godot/imported/CopperOre.png-4c0f78133d99d8bb5fb92636d1cd0b11.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/silver.png"
-dest_files=["res://.godot/imported/silver.png-226d29b0a98e099e21ed8d742786dbc3.ctex"]
+source_file="res://assets/Ores/CopperOre.png"
+dest_files=["res://.godot/imported/CopperOre.png-4c0f78133d99d8bb5fb92636d1cd0b11.ctex"]
 
 [params]
 

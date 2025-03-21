@@ -214,8 +214,7 @@ func break_ore():
 	var drop_range = drop_amounts.get(ore_type, [1, 1])
 	var drop_amount = randi_range(drop_range[0], drop_range[1])
 
-# Remove the "Ore" suffix if it's already included in ore_type (e.g., "CopperOre")
-	var ore_item_path = "res://assets/items/" + ore_type.capitalize() + ".tres"
+	var ore_item_path = "res://assets/Ores/" + ore_type.strip_edges() + ".tres"
 	var ore_resource = load(ore_item_path) as ItemResource
 
 	if ore_resource:
@@ -223,6 +222,7 @@ func break_ore():
 		print("📌 Added", drop_amount, ore_resource.item_name, "to inventory")
 	else:
 		print("❌ Could not load ore item from:", ore_item_path)
+		# Optionally handle the failure
 
 	var collision_shape = get_node("CollisionShape2D")
 	if collision_shape:

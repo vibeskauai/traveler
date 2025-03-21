@@ -203,7 +203,7 @@ func sync_with_global_state():
 
 # Declare the signal in PlayerStats.gd
 signal inventory_updated
-func add_item_to_inventory(item: ItemResource):
+func add_item_to_inventory(item: ItemResource, amount: int):
 	if item == null:
 		print("❌ Tried to add null item to inventory.")
 		return
@@ -216,21 +216,20 @@ func add_item_to_inventory(item: ItemResource):
 	# Check if the item already exists in the inventory
 	for entry in inventory:
 		if entry.path == item_path:
-			entry.quantity += 1
+			entry.quantity += amount  # Add the drop amount to the existing quantity
 			print("🔁 Increased quantity of:", item.item_name, "to", entry.quantity)
 			emit_signal("inventory_updated")
 			GlobalState.inventory = inventory
 			GlobalState.save_all_data()
 			return
 
-	# If it's a new item, add it
-	inventory.append({ "path": item_path, "quantity": 1 })
+	# If it's a new item, add it with the specified amount
+	inventory.append({ "path": item_path, "quantity": amount })
 	print("🆕 Added new item to inventory:", item.item_name)
 
 	emit_signal("inventory_updated")
 	GlobalState.inventory = inventory
 	GlobalState.save_all_data()
-
 
 # ✅ Get item type from GlobalState
 func get_item_type(item_name: String) -> String:

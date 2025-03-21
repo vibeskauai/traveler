@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ItemResource" load_steps=3 format=3 uid="uid://clrr270nhg77o"]
 
-[ext_resource type="Texture2D" uid="uid://cadnae6itk32q" path="res://assets/items/gold.png" id="1_33ttr"]
+[ext_resource type="Texture2D" uid="uid://cadnae6itk32q" path="res://assets/Ores/gold.png" id="1_33ttr"]
 [ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="1_v4hgp"]
 
 [resource]

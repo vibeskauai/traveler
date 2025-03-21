@@ -3,6 +3,8 @@ extends Node
 @onready var player = get_tree().get_first_node_in_group("player")
 @onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
 @onready var player_stats = get_node("/root/PlayerStats")  # Access PlayerStats for syncing equipped items
+var last_animation_played: String = "idle"  # Default to "idle" if nothing is set
+
 signal new_game_started(new_position: Vector2)
 
 # Player-related data
@@ -148,6 +150,7 @@ func save_all_data():
 	# Prepare the data dictionary to save
 	var data = {
 		"player_position": str(player_position.x) + "," + str(player_position.y),
+		"last_animation_played": GlobalState.last_animation_played,  # Save the last animation played
 		"inventory": inventory,
 		"equipped_items": equipped_items,  # ✅ Include equipped items
 		"player_xp": player_xp,
@@ -208,7 +211,7 @@ func load_game_data():
 			# Load Inventory
 			inventory = data.get("inventory", {})
 			print("📌 [GlobalState] Loaded Inventory from Save:", inventory)
-
+			GlobalState.last_animation_played = data.get("last_animation_played", "idle")  # Default to "idle" if not found
 			# Load Other Game Data
 			player_xp = data.get("player_xp", 0)
 			total_level = data.get("total_level", 1)
@@ -236,7 +239,6 @@ func load_game_data():
 
 						# If the ore has been mined (exists in mined_ores), remove it from the scene
 						if mined_ores.has(position_str):
-							print("❌ Ore node found at position", node.global_transform.origin, "is mined, removing.")
 							node.queue_free()  # Remove the ore node from the scene
 						else:
 							print("✅ Ore node at position", node.global_transform.origin, "is not mined.")

@@ -20,7 +20,7 @@ var auto_mining_timer: Timer = null
 
 # Ore dictionaries for XP, health, drop amount, etc.
 var ore_health_values := {
-	"copper_ore": 1,
+	"copper_ore": 10,
 	"silver_ore": 20,
 	"gold_ore": 60,
 	"rune_ore": 100,
@@ -96,19 +96,19 @@ func _ready():
 
 # Detect when the player swings the pickaxe and hits the ore
 func _on_hit(area):
-	# Only process hits from the player (check if player is the one who hit the ore)
-	if area.is_in_group("player") and player_stats.get_equipped_item("pickaxe") != "None":
+	# Check if the area is the pickaxe hitbox
+	if area == $PickaxeSprite/hitbox:  # Assuming the pickaxe hitbox is a child of PickaxeSprite
 		print("⛏️ Ore detected during swing:", ore_type)
 		
-		# Check if it's a manual mining action (click event)
-		if Input.is_action_just_pressed("mine_ore"):  # Assuming "mine_ore" is a custom action for manual mining
+		# Continue with mining logic...
+		if Input.is_action_just_pressed("mine_ore"):
 			is_manual_mining = true
 			print("🔨 Manual mining started!")
 		else:
 			is_manual_mining = false  # Auto-mining
 			print("⛏️ Auto mining started!")
 
-		# Start mining when the player swings their pickaxe
+		# Start mining
 		start_mining()
 
 # Start the mining process
@@ -175,22 +175,28 @@ func mine_ore(pickaxe: Node):
 	# Ensure the ore is still alive (not already destroyed)
 	if ore_health <= 0:
 		print("🪨 Ore is already destroyed.")
-		return
+		return  # Exit if the ore is already destroyed
 	
-	# Reduce ore health based on pickaxe damage
-	var damage = pickaxe_damage_values.get(player_stats.get_equipped_item("pickaxe"), 1)
-	ore_health -= damage
-	print("Ore health after mining:", ore_health)
+	# Get the equipped pickaxe type from the player stats
+	var equipped_pickaxe = player_stats.get_equipped_item("pickaxe")
+	
+	# Get the damage value from the pickaxe_damage_values dictionary based on the equipped pickaxe
+	var damage = pickaxe_damage_values.get(equipped_pickaxe, 1)  # Default damage of 1 if pickaxe isn't found
+	ore_health -= damage  # Reduce ore health based on pickaxe damage
+	
+	print("Ore health after mining:", ore_health)  # Debug output
 
-	# If ore health reaches 0, break the ore
+	# If ore health reaches 0 or below, break the ore
 	if ore_health <= 0:
-		break_ore()
+		break_ore()  # Call the function that handles ore destruction
+		print("🪨 Ore destroyed!")  # Debug output for ore destruction
 	else:
-		print("Ore health is not yet 0, continue mining.")
+		print("Ore health is not yet 0, continue mining.")  # Debug output for ongoing mining
 	
 	# Play the hit sound when the ore is mined
 	if hit_sound:
 		hit_sound.play()
+
 
 func break_ore():
 	if ore_health > 0:

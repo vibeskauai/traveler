@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=3 format=3 uid="uid://cafybcj1yy0xc"]
+
+[ext_resource type="Texture2D" uid="uid://bakojvr0tfkh5" path="res://assets/items/copper_infused_pickaxe.png" id="1_7jp4n"]
+[ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_s0r52"]
+
+[resource]
+script = ExtResource("2_s0r52")
+item_name = "Copper Infusec Pickaxe"
+item_type = null
+description = null
+icon = ExtResource("1_7jp4n")
+can_equip = null
+equip_slot = null
+stats = {}
+upgrade_path = null

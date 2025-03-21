@@ -75,7 +75,7 @@ func add_item_button(item_name: String):
 	# Create item button for inventory slot
 	var item_button = Button.new()
 	item_button.text = ""  # Icon-only button
-	item_button.custom_minimum_size = Vector2(52, 52)  # Set button size
+	item_button.custom_minimum_size = Vector2(58, 58)  # Set button size
 	item_button.flat = true
 	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.name = item_name  # Assign the item_name as the button's name

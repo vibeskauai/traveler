@@ -12,6 +12,7 @@ radius = 11.0454
 radius = 8.51469
 
 [node name="CopperOre" type="StaticBody2D" groups=["ores"]]
+z_index = -1
 scale = Vector2(0.882295, 0.882295)
 collision_layer = 2
 script = ExtResource("1_uymim")
@@ -27,6 +28,7 @@ texture = ExtResource("2_y7gke")
 
 [node name="Hitbox" type="Area2D" parent="." groups=["ores"]]
 position = Vector2(-11, 3)
+scale = Vector2(1.03379, 1.16966)
 disable_mode = 1
 collision_layer = 2
 

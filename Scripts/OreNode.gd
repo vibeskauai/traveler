@@ -113,29 +113,38 @@ func _on_hit(area):
 
 # Start the mining process
 func start_mining():
-	# If it's manual mining, make the process faster (25% more damage)
-	var damage = pickaxe_damage_values.get(player_stats.get_equipped_item("pickaxe"), 1)
+	var damage = 0  # Default mining damage if no pickaxe is equipped
+
+	# Get the equipped pickaxe and its stats
+	var pickaxe_path = player_stats.get_equipped_item("pickaxe")
+	if pickaxe_path != "":
+		var pickaxe = load(pickaxe_path)
+		if pickaxe and pickaxe is ItemResource:
+			damage = pickaxe.stats_resource.stats.get("mining_power", 1)  # Default to 1 if not found
+
+	# Apply manual mining bonus if active
 	if is_manual_mining:
 		damage *= 1.25  # Increase damage by 25% for manual mining
 
-	# Reduce ore health based on pickaxe damage
-	ore_health -= damage
+	# Reduce ore health, ensuring it doesn't go below 0
+	ore_health = max(ore_health - damage, 0)
 	print("Ore health after mining:", ore_health)
 
-	# Add XP for hitting the ore
-	var xp_gain = xp_on_hit.get(ore_type, 0)  # XP per hit for the specific ore
+	# Apply XP gain for hitting the ore
+	var xp_gain = xp_on_hit.get(ore_type, 0)
 	player_stats.gain_xp("mining", xp_gain)
 	print("📌 Gained", xp_gain, "XP for hitting the ore.")
 
-	# If ore health reaches 0, break the ore
+	# Check if ore is destroyed and break it, otherwise continue mining
 	if ore_health <= 0:
 		break_ore()
 	else:
 		print("Ore health is not yet 0, continue mining.")
-	
-	# Play the hit sound when the ore is mined
+
+	# Play hit sound
 	if hit_sound:
 		hit_sound.play()
+
 
 # Start the auto-mining process (e.g., when player swings pickaxe)
 func start_auto_mining():
@@ -157,79 +166,74 @@ func stop_auto_mining():
 
 # This function is called every time the auto-mining timer times out
 func _on_auto_mining_tick():
-	# Reduce ore health over time with the pickaxe damage
 	if ore_health <= 0:
 		break_ore()
-		stop_auto_mining()  # Stop auto-mining when the ore is destroyed
-	else:
-		var damage = pickaxe_damage_values.get(player_stats.get_equipped_item("pickaxe"), 1)  # Use the pickaxe damage
-		ore_health -= damage
-		print("Ore health after auto-mining:", ore_health)
+		stop_auto_mining()
+		return
 
-	# Play the hit sound on every mining tick
+	var damage = 1
+	var pickaxe_path = player_stats.get_equipped_item("pickaxe")
+
+	if pickaxe_path != "":
+		var pickaxe = load(pickaxe_path)
+		if pickaxe and pickaxe is ItemResource:
+			damage = pickaxe.stats.get("mining_power", 1)
+
+	ore_health -= damage
+	print("Ore health after auto-mining:", ore_health)
+
 	if hit_sound:
 		hit_sound.play()
 
 # Mining logic: Reduce ore health and check if the ore should break
-func mine_ore(pickaxe: Node):
-	# Get the equipped pickaxe from the player stats
-	var equipped_pickaxe = player_stats.get_equipped_item("weapon")
-	
-	# Check if a pickaxe is equipped, if not exit early
-	if equipped_pickaxe == "" or equipped_pickaxe == "None":
-		print("❌ No pickaxe equipped, cannot mine.")
-		return  # Exit if no pickaxe is equipped
-	
-	# Get the damage value from the pickaxe_damage_values dictionary based on the equipped pickaxe
-	var damage = pickaxe_damage_values.get(equipped_pickaxe, 1)  # Default damage of 1 if pickaxe isn't found
-	ore_health -= damage  # Reduce ore health based on pickaxe damage
-	
-	print("Ore health after mining:", ore_health)  # Debug output
+func mine_ore(pickaxe: ItemResource, player: Node):
+	if not pickaxe or not (pickaxe is ItemResource):
+		print("❌ Invalid or missing pickaxe during mining.")
+		return
 
-	# If ore health reaches 0 or below, break the ore
+	var damage = pickaxe.stats.get("mining_power", 1)
+	ore_health -= damage
+	print("Ore health after mining:", ore_health)
+
 	if ore_health <= 0:
-		break_ore()  # Call the function that handles ore destruction
-		print("🪨 Ore destroyed!")  # Debug output for ore destruction
+		break_ore()
+		print("🪨 Ore destroyed!")
 	else:
-		print("Ore health is not yet 0, continue mining.")  # Debug output for ongoing mining
-	
-	# Play the hit sound when the ore is mined
+		print("Ore health is not yet 0, continue mining.")
+
 	if hit_sound:
 		hit_sound.play()
 
 
-
-
 func break_ore():
 	if ore_health > 0:
-		return  # Prevents breaking ore if it's not completely mined
+		return
 
 	print("🪨 Ore destroyed!")
 
-		# Handle ore drop logic
-	var ore_name = ore_type  # Use ore_type directly (e.g., "copper_ore")
-	print("Ore type to add:", ore_name)
+	var drop_range = drop_amounts.get(ore_type, [1, 1])
+	var drop_amount = randi_range(drop_range[0], drop_range[1])
 
-	var drop_range = drop_amounts.get(ore_type, [1, 1])  # Default to [1,1] if ore_type is not found
-	var drop_amount = randi_range(drop_range[0], drop_range[1])  # Random number between min and max
+# Remove the "Ore" suffix if it's already included in ore_type (e.g., "CopperOre")
+	var ore_item_path = "res://assets/items/" + ore_type.capitalize() + ".tres"
+	var ore_resource = load(ore_item_path) as ItemResource
 
-	# Add ore to inventory using correct name (e.g., "copper_ore")
-	player_stats.add_item_to_inventory(ore_name, drop_amount)  # Add the ore resource to the inventory
-	print("📌 Added", drop_amount, ore_name, "to inventory")
+	if ore_resource:
+		player_stats.add_item_to_inventory(ore_resource, drop_amount)
+		print("📌 Added", drop_amount, ore_resource.item_name, "to inventory")
+	else:
+		print("❌ Could not load ore item from:", ore_item_path)
 
-
-	print("✅ Ore destroyed and removed from scene!")
-
-	var collision_shape = get_node("CollisionShape2D")  # Adjust path if necessary
+	var collision_shape = get_node("CollisionShape2D")
 	if collision_shape:
-		collision_shape.disabled = true  # Disable the collision shape immediately
+		collision_shape.disabled = true
 		print("✅ Collision shape disabled during break")
-		
+
 	sprite.visible = false
 
-	# **Play break sound immediately and remove everything once finished**
 	if break_sound and is_inside_tree():
-		break_sound.play()  # Play break sound
-		await break_sound.finished  # Wait for the sound to finish before proceeding
-	GlobalState.save_mined_ore(global_position, ore_type, self)  # Pass 'self' as the third argument
-	queue_free()  # Destroy the ore node after it's mined
+		break_sound.play()
+		await break_sound.finished
+
+	GlobalState.save_mined_ore(global_position, ore_type, self)
+	queue_free()

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatsResource" load_steps=2 format=3 uid="uid://2l31svh87rkl"]
+
+[ext_resource type="Script" uid="uid://dif2807ijpcxj" path="res://StatResources/StatsResource.gd" id="1_c3foo"]
+
+[resource]
+script = ExtResource("1_c3foo")
+stats = {
+"attack": 0,
+"defense": 0,
+"mining_power": 7
+}
+metadata/_custom_type_script = "uid://dif2807ijpcxj"

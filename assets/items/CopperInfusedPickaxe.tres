@@ -1,15 +1,16 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=3 format=3 uid="uid://cafybcj1yy0xc"]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=4 format=3 uid="uid://ctlulntk3kh3a"]
 
 [ext_resource type="Texture2D" uid="uid://bakojvr0tfkh5" path="res://assets/items/copper_infused_pickaxe.png" id="1_7jp4n"]
 [ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_s0r52"]
+[ext_resource type="Resource" uid="uid://p0bdxqwpl2m3" path="res://StatResources/CopperInfusedPickaxeStats.tres" id="3_s0r52"]
 
 [resource]
 script = ExtResource("2_s0r52")
-item_name = "Copper Infusec Pickaxe"
-item_type = null
-description = null
+item_name = "Copper Infused Pickaxe"
+item_type = "pickaxe"
+description = "A magical pickaxe crafted by Kragsroth which can be upgraded, given to you by Durmil the Dwarf."
 icon = ExtResource("1_7jp4n")
-can_equip = null
-equip_slot = null
-stats = {}
-upgrade_path = null
+can_equip = true
+equip_slot = "weapon"
+stats_resource = ExtResource("3_s0r52")
+upgrade_path = Array[String](["[ \"res://items/SilverInfusedPickaxe.tres\" ]"])

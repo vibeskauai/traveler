@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://bx3qeujpfyqcf"]
+[gd_scene load_steps=26 format=3 uid="uid://bx3qeujpfyqcf"]
 
 [ext_resource type="Script" uid="uid://b66ckcl1eod6n" path="res://Scripts/TheCrossroads.gd" id="1_mtni4"]
 [ext_resource type="PackedScene" uid="uid://dd02cojbu5whe" path="res://Scenes/Durmil.tscn" id="3_wfsrg"]
@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://c0jcjbl5ftvvc" path="res://ExternalArt/New Art/sand tile.png" id="11_7ft77"]
 [ext_resource type="Texture2D" uid="uid://bvuhr60vj3tw5" path="res://ExternalArt/New Art/grass.png" id="12_cfuau"]
 [ext_resource type="Texture2D" uid="uid://cm4mwidugapea" path="res://ExternalArt/New Art/Pixel Crawler - Free Pack 2.0.1/Pixel Crawler - Free Pack/Environment/Tilesets/Cave_Tiles.png" id="13_ytnni"]
+[ext_resource type="PackedScene" uid="uid://bq45ki5t54ivj" path="res://Ore Scenes/SilverNode.tscn" id="14_mykux"]
 [ext_resource type="PackedScene" uid="uid://dfr6u3h177ppf" path="res://Ore Scenes/CopperNode.tscn" id="15_w0rdw"]
 [ext_resource type="PackedScene" uid="uid://dtbq3hmpmarqm" path="res://Scenes/rock_wall.tscn" id="16_5pthx"]
 [ext_resource type="PackedScene" uid="uid://caueqhsqpekds" path="res://Scenes/TheTraveler.tscn" id="16_mtni4"]
@@ -2673,10 +2674,6 @@ shape = SubResource("RectangleShape2D_alh3a")
 [node name="DefaultSpawn" type="Marker2D" parent="."]
 position = Vector2(42, -26)
 
-[node name="HollowedPickaxe" parent="." instance=ExtResource("4_22w65")]
-position = Vector2(38, 14)
-rotation = 4.71239
-
 [node name="CopperNodes" type="Node" parent="."]
 
 [node name="CopperNode" parent="CopperNodes" instance=ExtResource("15_w0rdw")]
@@ -2812,6 +2809,9 @@ scale = Vector2(0.85366, 0.885522)
 [node name="CopperNode32" parent="CopperNodes" instance=ExtResource("15_w0rdw")]
 position = Vector2(150, 76)
 scale = Vector2(0.85366, 0.885522)
+
+[node name="HollowedPickaxe" parent="CopperNodes" instance=ExtResource("4_22w65")]
+position = Vector2(40, 12)
 
 [node name="RocksFolder" type="Node" parent="."]
 
@@ -3390,3 +3390,9 @@ position = Vector2(-120, 426)
 
 [node name="TheTraveler" parent="." groups=["player"] instance=ExtResource("16_mtni4")]
 position = Vector2(38, -52)
+
+[node name="SilverOre" parent="." instance=ExtResource("14_mykux")]
+position = Vector2(12, 428)
+
+[node name="SilverOre2" parent="." instance=ExtResource("14_mykux")]
+position = Vector2(68, 425)

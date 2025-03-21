@@ -6,7 +6,6 @@ extends Node
 @onready var inventory = GlobalState.inventory  # ✅ Sync inventory reference
 @onready var player = get_tree().get_first_node_in_group("player")
 
-
 signal equipment_changed(slot_type, item_name)  # ✅ UI updates when equipment changes
 @export var equipped_items := {
 	"weapon": null,
@@ -47,68 +46,45 @@ var equipped_armor = null   # Stores the equipped armor (if any)
 func _ready():
 	print("🔄 [PlayerStats] Syncing with GlobalState on game start...")
 
-	# ✅ Ensure inventory loads from GlobalState
 	inventory = GlobalState.inventory
-	print("📌 [PlayerStats] Loaded Inventory:", inventory)  # 🔹 Debugging Line
+	equipped_items = GlobalState.equipped_items
 	update_ui()
 	
-	await get_tree().process_frame  # Ensures scene is fully loaded
+	await get_tree().process_frame
 	player = get_tree().get_first_node_in_group("player")
-	print("🔄 Checking inventory format on game load...")
 
-	# Ensure GlobalState.inventory is initialized
-	if not GlobalState.inventory:
-		GlobalState.inventory = {}
+	# Fallback defaults if inventory or equipped items not found
+	if typeof(inventory) != TYPE_ARRAY:
+		print("⚠️ [PlayerStats] Converting old inventory format...")
+		inventory = []
+		GlobalState.inventory = inventory
 
-	# Ensure equipped items are loaded from GlobalState
-	if "equipped_items" in GlobalState:
-		equipped_items = GlobalState.equipped_items
-	else:
-		GlobalState.equipped_items = equipped_items  # Default values
+	if typeof(equipped_items) != TYPE_DICTIONARY:
+		print("⚠️ [PlayerStats] Using default equipped items...")
+		equipped_items = {
+			"weapon": null,
+			"helm": null,
+			"chest": null,
+			"legs": null,
+			"shield": null,
+			"pickaxe": null
+		}
+		GlobalState.equipped_items = equipped_items
 
-	print("📌 Equipped Items Loaded:", equipped_items)
-	
-	# Ensure inventory is initialized
-	if not GlobalState.inventory:
-		GlobalState.inventory = {}
-
-	# ✅ Convert old inventory format (single number) to dictionary format
-	for item_name in GlobalState.inventory.keys():
-		var item = GlobalState.inventory[item_name]
-
-		# Convert single number to dictionary format
-		if typeof(item) == TYPE_FLOAT or typeof(item) == TYPE_INT:
-			print("⚠️ Fixing inventory format for:", item_name)
-			GlobalState.inventory[item_name] = { "quantity": int(item), "type": "unknown" }
-
-		# Ensure item type is properly assigned
-		if typeof(item) == TYPE_DICTIONARY and (!item.has("type") or item["type"] == "unknown"):
-			if GlobalState.item_types.has(item_name):
-				GlobalState.inventory[item_name]["type"] = GlobalState.item_types[item_name]
-				print("✅ Assigned correct type to:", item_name)
-
-	# ✅ Ensure Hollowed Pickaxe format is correct
-	if "Hollowed Pickaxe" in GlobalState.inventory:
-		var pickaxe_data = GlobalState.inventory["Hollowed Pickaxe"]
-		if typeof(pickaxe_data) != TYPE_DICTIONARY or !pickaxe_data.has("type"):
-			print("⚠️ Fixing Hollowed Pickaxe format...")
-			GlobalState.inventory["Hollowed Pickaxe"] = { "quantity": 0, "type": "pickaxe" }
-
-	# ✅ Apply Fixed Inventory Locally
-	inventory = GlobalState.inventory
-
-	# Initialize stats from GlobalState (when loading the game)
+	# Load stats
 	load_player_stats()
-	# Update computed skill levels from XP values
 	update_skill_levels()
-	
-	# Initialize autosave functionality
+
+	# Setup autosave
 	autosave_timer = Timer.new()
 	add_child(autosave_timer)
-	autosave_timer.wait_time = 60  # Autosave interval set to 60 seconds
-	autosave_timer.one_shot = false  # Repeat after each interval
+	autosave_timer.wait_time = 60
+	autosave_timer.one_shot = false
 	autosave_timer.connect("timeout", Callable(self, "_on_autosave_timeout"))
 	autosave_timer.start()
+
+	print("✅ [PlayerStats] Ready with inventory size:", inventory.size())
+
 
 # Function to load player stats (from GlobalState or file)
 func load_player_stats():
@@ -118,7 +94,6 @@ func load_player_stats():
 	mining_xp = GlobalState.mining_xp
 	herbalism_xp = GlobalState.herbalism_xp
 	combat_xp = GlobalState.combat_xp
-	inventory = GlobalState.inventory  # Assuming inventory is in GlobalState
 
 # Function to update computed skill levels based on current XP values.
 func update_skill_levels():
@@ -202,7 +177,6 @@ func get_total_level() -> int:
 	return min(total_skill_level, 70)  # Cap total level at 70
 
 # Sync player stats with GlobalState (for persistence)
-# Sync player stats with GlobalState (for persistence)
 func sync_player_stats():
 	# Calculate total level (sum of skill levels)
 	total_level = get_total_level()
@@ -229,26 +203,34 @@ func sync_with_global_state():
 
 # Declare the signal in PlayerStats.gd
 signal inventory_updated
-func add_item_to_inventory(item_name: String, quantity: int):
-	# Normalize item name by removing any potential suffix like "_ore" from the ore type
-	var normalized_name = item_name.replace("_ore", "")  # Ensure consistent naming
+func add_item_to_inventory(item: ItemResource):
+	if item == null:
+		print("❌ Tried to add null item to inventory.")
+		return
 
-	# Check if item is already in inventory
-	if inventory.has(normalized_name):
-		inventory[normalized_name]["quantity"] += quantity  # Increase quantity
-	else:
-		inventory[normalized_name] = {
-			"quantity": quantity,
-			"type": "ore"  # Set type as "ore"
-		}
+	var item_path = item.resource_path
+	if item_path == "":
+		print("❌ Item has no valid resource_path. Make sure it's saved as a .tres file.")
+		return
 
-	  # Emit the signal to notify the UI to update
+	# Check if the item already exists in the inventory
+	for entry in inventory:
+		if entry.path == item_path:
+			entry.quantity += 1
+			print("🔁 Increased quantity of:", item.item_name, "to", entry.quantity)
+			emit_signal("inventory_updated")
+			GlobalState.inventory = inventory
+			GlobalState.save_all_data()
+			return
+
+	# If it's a new item, add it
+	inventory.append({ "path": item_path, "quantity": 1 })
+	print("🆕 Added new item to inventory:", item.item_name)
+
 	emit_signal("inventory_updated")
-	# Sync with GlobalState or save the updated inventory
 	GlobalState.inventory = inventory
 	GlobalState.save_all_data()
 
-	print("📌 Updated Inventory:", inventory)
 
 # ✅ Get item type from GlobalState
 func get_item_type(item_name: String) -> String:
@@ -256,52 +238,27 @@ func get_item_type(item_name: String) -> String:
 		return GlobalState.item_types[item_name]
 	return "unknown"  # Default if item type is missing
 
-# PlayerStats.gd
-
-# Sync inventory and equipped items with GlobalState
-# PlayerStats.gd
-
-# Sync inventory and equipped items with GlobalState
 func sync_inventory_with_player():
-	# Sync the inventory and equipped items with GlobalState
 	GlobalState.inventory = inventory
 	GlobalState.equipped_items = equipped_items
-
-	# Save data to GlobalState
 	GlobalState.save_all_data()
 
-	# Update the UI
 	if inventory_panel:
-		inventory_panel.update_inventory_panel()  # Ensure inventory is up to date
+		inventory_panel.update_inventory_ui()  # ✅ correct call now
 
 	if armor_panel:
-		armor_panel.load_equipped_items()  # Ensure armor panel is updated
+		armor_panel.load_equipped_items()
 	else:
 		print("❌ ERROR: ArmorPanel not found!")
 
 	print("🔄 Inventory and Equipped Items synced and UI updated.")
 
-# Get the currently equipped item (for UI display, etc.)
+
 func get_equipped_item(item_type: String) -> String:
-	print("Getting equipped item for type:", item_type)  # Debugging the requested item type
-	
-	if item_type == "weapon":
-		if equipped_weapon != null:
-			print("Equipped weapon: ", equipped_weapon.name)  # Debugging the equipped weapon
-			return equipped_weapon.name
-		else:
-			print("No weapon equipped.")  # Debugging when no weapon is equipped
-			return "None"
-	elif item_type == "armor":
-		if equipped_armor != null:
-			print("Equipped armor: ", equipped_armor.name)  # Debugging the equipped armor
-			return equipped_armor.name
-		else:
-			print("No armor equipped.")  # Debugging when no armor is equipped
-			return "None"
-	
-	print("Invalid item type:", item_type)  # Debugging invalid item types
-	return "Invalid item type"
+	var slot = get_slot_by_type(item_type)
+	if equipped_items.has(slot) and equipped_items[slot] != null and equipped_items[slot] != "":
+		return equipped_items[slot]
+	return ""
 
 
 # Function for autosave (called every interval)
@@ -314,29 +271,32 @@ func _process(delta):
 		GlobalState.save_all_data()  # Save data manually
 		print("Game saved manually.")
 
-# ✅ EQUIP AN ITEM FROM INVENTORY
-func equip_item(slot_type: String, item_name: String):
-	print("✅ [PlayerStats] Attempting to equip:", item_name, "to", slot_type)
+func equip_item(slot_type: String, item_path: String):
+	print("✅ [PlayerStats] Attempting to equip:", item_path, "to", slot_type)
 
-	# ✅ Ensure slot is available
-	if equipped_items.get(slot_type):
+	# ✅ Check if item is already equipped in that slot
+	if equipped_items.get(slot_type) != null and equipped_items[slot_type] != "":
 		print("❌ [PlayerStats] ERROR: Slot", slot_type, "already occupied by", equipped_items[slot_type])
 		return
 
-	# ✅ Remove item from inventory before equipping
-	if inventory.has(item_name):
-		inventory.erase(item_name)
-	else:
-		print("❌ [PlayerStats] ERROR: Item", item_name, "not found in inventory!")
-		return
+	# ✅ Find the item in the array-based inventory
+	for i in inventory.size():
+		if inventory[i].path == item_path:
+			# ✅ Reduce quantity or remove if it's the last one
+			inventory[i].quantity -= 1
+			if inventory[i].quantity <= 0:
+				inventory.remove_at(i)
+			break
+		else:
+			print("❌ [PlayerStats] ERROR: Item", item_path, "not found in inventory!")
+			return
 
 	# ✅ Equip the item
-	equipped_items[slot_type] = item_name
+	equipped_items[slot_type] = item_path
 	sync_with_global_state()
 
-	print("✅ [PlayerStats] Successfully equipped:", item_name, "to", slot_type)
+	print("✅ [PlayerStats] Successfully equipped:", item_path, "to", slot_type)
 
-	# ✅ Update UI & Pickaxe Visibility
 	update_ui()
 	update_pickaxe_visibility()
 
@@ -347,33 +307,36 @@ func unequip_item(slot_type: String):
 		print("❌ [PlayerStats] ERROR: Slot does not exist in equipped_items:", slot_type)
 		return
 
-	var item = equipped_items[slot_type]
-	if item:
-		print("❎ [PlayerStats] Unequipping:", item, "from", slot_type)
-
-		# ✅ Ensure item is returned to inventory
-		if inventory.has(item):
-			inventory[item]["quantity"] += 1
-		else:
-			inventory[item] = {"quantity": 1, "type": GlobalState.get_item_type(item)}
-
-		# ✅ Remove item from equipped slot
-		equipped_items[slot_type] = ""
-
-		# ✅ Save all data to GlobalState
-		GlobalState.equipped_items = equipped_items
-		GlobalState.inventory = inventory  # <- 🔹 Ensure inventory is saved here!
-		GlobalState.save_all_data()
-
-		print("✅ [PlayerStats] Successfully unequipped", item)
-		print("📌 Updated GlobalState Inventory:", GlobalState.inventory)
-	else:
+	var item_path = equipped_items[slot_type]
+	if item_path == null or item_path == "":
 		print("⚠️ [PlayerStats] WARNING: No item to unequip in slot", slot_type)
+		return
 
+	print("❎ [PlayerStats] Unequipping:", item_path, "from", slot_type)
 
-	# ✅ Update UI & Pickaxe Visibility
+	# ✅ Add item back to inventory (or increase quantity if it exists)
+	var found = false
+	for entry in inventory:
+		if entry.path == item_path:
+			entry.quantity += 1
+			found = true
+			break
+
+	if not found:
+		inventory.append({ "path": item_path, "quantity": 1 })
+
+	# ✅ Clear equipped slot
+	equipped_items[slot_type] = ""
+
+	# ✅ Save all data to GlobalState
+	GlobalState.equipped_items = equipped_items
+	GlobalState.inventory = inventory
+	GlobalState.save_all_data()
+
+	print("✅ [PlayerStats] Successfully unequipped", item_path)
 	update_ui()
 	player.update_pickaxe_visibility()
+
 
 # Function to return the correct slot type for an item
 func get_slot_by_type(item_type: String) -> String:

@@ -14,6 +14,7 @@ collision_layer = 2
 script = ExtResource("1_yw5j6")
 item_name = "Hollowed Pickaxe"
 item_texture = ExtResource("1_jmnbd")
+item_path = "res://assets/items/HollowedPickaxe.tres"
 
 [node name="Sprite2D" type="Sprite2D" parent="." groups=["pickups"]]
 scale = Vector2(0.68, 0.68)

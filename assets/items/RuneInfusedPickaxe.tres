@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=4 format=3 uid="uid://dexxlejexuqul"]
+
+[ext_resource type="Texture2D" uid="uid://cq11djjablkyv" path="res://assets/items/rune_infused_pickaxe.png" id="1_2c273"]
+[ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_twymc"]
+[ext_resource type="Resource" uid="uid://tj4xtsktqhgk" path="res://StatResources/RuneInfusedPickaxeStats.tres" id="3_twymc"]
+
+[resource]
+script = ExtResource("2_twymc")
+item_name = "Rune Infused Pickaxe"
+item_type = "pickaxe"
+description = "A magical pickaxe crafted by Kragsroth which can be upgraded, given to you by Durmil the Dwarf."
+icon = ExtResource("1_2c273")
+can_equip = true
+equip_slot = "weapon"
+stats_resource = ExtResource("3_twymc")
+upgrade_path = Array[String](["[ \"res://items/DragonInfusedPickaxe.tres\" ]"])

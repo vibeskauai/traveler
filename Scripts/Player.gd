@@ -235,96 +235,63 @@ func save_player_position():
 	GlobalState.player_position = position
 	GlobalState.save_all_data()
 
-# --- ITEM EQUIP/UNEQUIP FUNCTIONS ---
 # Called when an inventory item is clicked to toggle pickaxe equip
-func _on_item_button_pressed(item_name: String) -> void:
-	print("🖱️ Player clicked on item:", item_name)
-
-	if not player_stats:
-		print("❌ ERROR: PlayerStats not found!")
-		return
-
-	if not player_stats.inventory.has(item_name):
-		print("❌ ERROR: Item not found in inventory:", item_name)
-		return
-
-	# Check if the item is already equipped → Unequip it
-	if item_name in player_stats.equipped_items.values():
-		print("❎ Unequipping:", item_name)
-		if player_stats.has_method("unequip_item"):
-			player_stats.unequip_item(item_name)
+func _on_item_button_pressed(item: ItemResource):
+	if player_stats.is_item_equipped(item.resource_path):
+		player_stats.unequip_item(item.equip_slot)
 	else:
-		print("✅ Equipping:", item_name)
-		if player_stats.has_method("equip_item"):
-			player_stats.equip_item(item_name)
+		player_stats.equip_item(item.equip_slot, item.resource_path)
 
 	update_inventory_panel()
-	update_pickaxe_visibility()  # ✅ Ensure the pickaxe shows/hides immediately
+	update_pickaxe_visibility()
+
 
 
 func update_pickaxe_visibility():
-	var pickaxe_name = player_stats.equipped_items.get("weapon", "")
-
+	var pickaxe_path = player_stats.equipped_items.get("weapon", "")
 	if has_node("PickaxeSprite"):
 		var pickaxe_sprite = get_node("PickaxeSprite")
-
-		if pickaxe_name and pickaxe_name != "":
-
-			# **Ensure sprite texture is actually assigned**
-			var pickaxe_texture = load("res://assets/items/" + pickaxe_name + ".png")
-
-			if pickaxe_texture:
-				pickaxe_sprite.texture = pickaxe_texture
+		if pickaxe_path != "":
+			var item = load(pickaxe_path)
+			if item and item is ItemResource:
+				pickaxe_sprite.texture = item.icon
 				pickaxe_sprite.visible = true
 			else:
-				print("❌ [Player] ERROR: Pickaxe texture is missing for:", pickaxe_name)
-
+				print("❌ Pickaxe icon missing or invalid item:", pickaxe_path)
 		else:
 			pickaxe_sprite.visible = false
 
-	else:
-		print("❌ [Player] ERROR: PickaxeSprite node is missing in Player!")
 
 
 func _on_item_picked_up(item_name: String, item_type: String):
-	print("Item picked up:", item_name)
-
-	# ✅ If item type is empty or "unknown", get the correct type from GlobalState
-	if item_type == "" or item_type == "unknown":
-		item_type = GlobalState.get_item_type(item_name)
-
-	add_item_to_inventory(item_name, item_type)
-	sync_inventory_with_global_state()
-
-	# ✅ Ensure UI updates immediately
-	if inventory_panel:
-		print("🔄 Forcing Inventory UI Update after item pickup...")
-		inventory_panel.update_inventory_ui()
+	var item_path = "res://assets/items/" + item_name + ".tres"
+	if FileAccess.file_exists(item_path):
+		var item = load(item_path)
+		if item and item is ItemResource:
+			add_item_to_inventory(item)
+		else:
+			print("❌ Failed to load ItemResource:", item_path)
 	else:
-		print("❌ ERROR: inventory_panel is NULL! Searching scene tree...")
-	
-	# Try dynamically finding it
-	inventory_panel = get_tree().get_first_node_in_group("inventory_ui")
+		print("❌ Item file not found:", item_path)
 
-	if inventory_panel:
-		print("✅ InventoryPanel found dynamically, updating UI!")
-		inventory_panel.update_inventory_ui()
-	else:
-		print("❌ STILL ERROR: InventoryPanel could not be found!")
+	update_inventory_panel()
+
 
 
 # Function to add the item to the inventory
-func add_item_to_inventory(item_name: String, item_type: String):
-	if item_name in player_stats.inventory:
-		if typeof(player_stats.inventory[item_name]) == TYPE_DICTIONARY:
-			player_stats.inventory[item_name]["quantity"] += 1  # ✅ Increase quantity
-		else:
-			print("⚠️ Fixing inventory format for:", item_name)
-			player_stats.inventory[item_name] = {"quantity": 1, "type": item_type}  # ✅ Ensure correct format
-	else:
-		player_stats.inventory[item_name] = {"quantity": 1, "type": item_type}  # ✅ Set correct format on first pickup
-
-	print("📌 Updated Inventory:", player_stats.inventory)  # Debugging
+func add_item_to_inventory(item: ItemResource, quantity: int = 1):
+	for entry in player_stats.inventory:
+		if entry.path == item.resource_path:
+			entry.quantity += quantity
+			sync_inventory_with_global_state()
+			return
+	
+	# Add new item
+	player_stats.inventory.append({
+		"path": item.resource_path,
+		"quantity": quantity
+	})
+	sync_inventory_with_global_state()
 
 
 # Function to sync inventory with GlobalState
@@ -387,13 +354,11 @@ func apply_loaded_facing_direction():
 	# Store the direction for idle use
 	last_direction = new_anim
 
-# Equip the item in the player inventory
-# ✅ EQUIP AN ITEM (Calls PlayerStats)
-func on_item_equipped(slot_type, item_name):
+func on_item_equipped(slot_type: String, item_path: String):
 	if slot_type == "weapon":
 		update_pickaxe_visibility()
 
-func on_item_unequipped(slot_type, item_name):
+func on_item_unequipped(slot_type: String, item_path: String):
 	if slot_type == "weapon":
 		update_pickaxe_visibility()
 
@@ -425,13 +390,11 @@ func update_inventory_panel():
 
 func _on_area_2d_area_entered(area: Area2D) -> void:
 	pass # Replace with function body.
-	
 
-# Called when the player swings the pickaxe
 # Function to ensure hitbox is active during swing
 func perform_swing():
 	var swing_animation = get_swing_animation(last_direction)
-	
+
 	if swing_animation != "":
 		# Play the correct swing animation
 		animation_player.play(swing_animation)
@@ -447,12 +410,9 @@ func perform_swing():
 			var ore = detect_ore_in_swing_area(pickaxe_hit_area)
 			if ore:
 				print("⛏️ Ore detected during swing:", ore.name)  # Debug output
-				ore.mine_ore(self)  # Call the mine_ore function from OreNode
-	else:
-		is_swinging = false  # If no valid swing animation, stop swinging
 
-
-
+				# Start mining without passing arguments
+				ore.start_mining()
 
 
 # Function to return the swing animation based on the last movement direction
@@ -495,24 +455,34 @@ func mine_target_ore():
 	if not target_ore or not is_mining:
 		return
 
-	var equipped_pickaxe = PlayerStats.get_equipped_item("pickaxe")
-	if not equipped_pickaxe:
+	var equipped_path = PlayerStats.get_equipped_item("pickaxe")
+	if equipped_path == "":
 		print("❌ No pickaxe equipped!")
+		return
+
+	var equipped_pickaxe = load(equipped_path)
+	if not (equipped_pickaxe and equipped_pickaxe is ItemResource):
+		print("❌ Failed to load equipped pickaxe resource!")
 		return
 
 	target_ore.mine_ore(equipped_pickaxe, self)
 	animation_player.play("mine_swing")
 
-	await get_tree().create_timer(0.5).timeout  # Delay for auto-mining
+	await get_tree().create_timer(0.5).timeout  # Delay for auto-mining loop
 	if is_mining:
 		mine_target_ore()
 
-# Detects collision with ores during swing
 func _on_pickaxe_hit(area):
 	if area and area.is_in_group("ores"):
 		var ore = area.get_parent()
-		var equipped_pickaxe = PlayerStats.get_equipped_item("pickaxe")
+		var equipped_path = PlayerStats.get_equipped_item("pickaxe")
 
-		if equipped_pickaxe:
-			print("⛏️ Mining with:", equipped_pickaxe)
-			ore.mine_ore(equipped_pickaxe, self)  # Send pickaxe name and player reference
+		if equipped_path != "":
+			var equipped_pickaxe = load(equipped_path)
+			if equipped_pickaxe and equipped_pickaxe is ItemResource:
+				print("⛏️ Mining with:", equipped_pickaxe.item_name)
+				ore.mine_ore(equipped_pickaxe, self)
+			else:
+				print("❌ Failed to load pickaxe resource:", equipped_path)
+		else:
+			print("❌ No pickaxe equipped!")

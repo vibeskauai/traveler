@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=3 format=3 uid="uid://4ec0oyadj0af"]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=4 format=3 uid="uid://4ec0oyadj0af"]
 
 [ext_resource type="Texture2D" uid="uid://h21aclfiopn4" path="res://assets/items/Hollowed Pickaxe.png" id="1_w0jwo"]
 [ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_8grbh"]
+[ext_resource type="Resource" uid="uid://bhbf14umfo26w" path="res://StatResources/HollowedPickaxeStatResource.tres" id="3_8grbh"]
 
 [resource]
 script = ExtResource("2_8grbh")
@@ -9,7 +10,7 @@ item_name = "Hollowed Pickaxe"
 item_type = "pickaxe"
 description = "A magical pickaxe crafted by Kragsroth which can be upgraded, given to you by Durmil the Dwarf."
 icon = ExtResource("1_w0jwo")
-can_equip = null
+can_equip = true
 equip_slot = "weapon"
-stats = {}
-upgrade_path = Array[String](["[ \"res://items/CopperInfusedPickaxe.tres\" ]"])
+stats_resource = ExtResource("3_8grbh")
+upgrade_path = Array[String](["[\"res://assets/items/CopperInfusedPickaxe.tres\"]"])

@@ -9,7 +9,7 @@ signal new_game_started(new_position: Vector2)
 
 # Player-related data
 var player_position : Vector2 = Vector2(43, -42)  # Default starting position (Vector2 type)
-var inventory = {}  # Inventory will be a dictionary where items are stored
+var inventory: Array = []
 var player_xp = 0  # Player experience points
 var total_level = 1  # Starting level
 var health = 100  # Player health
@@ -108,7 +108,7 @@ func new_game():
 	print("✅ New default position set:", player_position)
 
 	# Reset all other game data
-	inventory = {}
+	inventory = []
 	player_xp = 0
 	total_level = 1
 	health = 100
@@ -144,15 +144,23 @@ func update_player_position(new_position: Vector2):
 
 # Save all game data to a file
 func save_all_data():
-	# Convert last facing direction to string in "x,y" format
 	var last_facing_str = str(last_facing_direction.x) + "," + str(last_facing_direction.y)
 
-	# Prepare the data dictionary to save
+	# Convert inventory to savable format (just path and quantity)
+	var serialized_inventory = []
+	for entry in inventory:
+		if entry.has("path") and entry.has("quantity"):
+			serialized_inventory.append({
+				"path": entry["path"],
+				"quantity": entry["quantity"]
+			})
+
+	# Prepare the full save data dictionary
 	var data = {
 		"player_position": str(player_position.x) + "," + str(player_position.y),
-		"last_animation_played": GlobalState.last_animation_played,  # Save the last animation played
-		"inventory": inventory,
-		"equipped_items": equipped_items,  # ✅ Include equipped items
+		"last_animation_played": GlobalState.last_animation_played,
+		"inventory": serialized_inventory,
+		"equipped_items": equipped_items,
 		"player_xp": player_xp,
 		"total_level": total_level,
 		"health": health,
@@ -165,11 +173,10 @@ func save_all_data():
 		"has_upgraded_pickaxe": has_upgraded_pickaxe
 	}
 
-	# Convert the data to a JSON string
+	# Write to file as JSON
 	var json = JSON.new()
 	var json_data = json.stringify(data)
 
-	# Write the JSON data to the save file
 	var file = FileAccess.open(save_file_path, FileAccess.WRITE)
 	if file:
 		file.store_string(json_data)
@@ -184,14 +191,12 @@ func load_game_data():
 	var file = FileAccess.open(save_file_path, FileAccess.READ)
 	if file:
 		var json_data = file.get_as_text()
-		print("🔄 File data loaded:", json_data)  # Debug print to see the content of the loaded file
-		
 		var json = JSON.new()
 		var parse_result = json.parse(json_data)
-		
+
 		if parse_result == OK:
 			var data = json.get_data()
-			
+
 			# Load Player Position
 			var position_string = data.get("player_position", "0,0")
 			var position_array = position_string.split(",")
@@ -204,15 +209,26 @@ func load_game_data():
 			print("↔️ Loaded last facing direction from save:", last_facing_direction)
 
 			# Load Equipped Items
-			equipped_items = data.get("equipped_items", equipped_items)
+			equipped_items = data.get("equipped_items", {})
 			if equipped_items == null:
-				equipped_items = { "weapon": null, "helm": null, "chest": null, "legs": null, "shield": null, "pickaxe": null }
+				equipped_items = {
+					"weapon": null, "helm": null, "chest": null,
+					"legs": null, "shield": null, "pickaxe": null
+				}
 
-			# Load Inventory
-			inventory = data.get("inventory", {})
-			print("📌 [GlobalState] Loaded Inventory from Save:", inventory)
-			GlobalState.last_animation_played = data.get("last_animation_played", "idle")  # Default to "idle" if not found
+			# Load Inventory as resource-based entries
+			inventory.clear()
+			var saved_inventory = data.get("inventory", [])
+			for entry in saved_inventory:
+				if entry.has("path") and entry.has("quantity"):
+					inventory.append({
+						"path": entry["path"],
+						"quantity": entry["quantity"]
+					})
+			print("📦 [GlobalState] Loaded Inventory from Save:", inventory)
+
 			# Load Other Game Data
+			GlobalState.last_animation_played = data.get("last_animation_played", "idle")
 			player_xp = data.get("player_xp", 0)
 			total_level = data.get("total_level", 1)
 			health = data.get("health", 100)
@@ -223,44 +239,37 @@ func load_game_data():
 			has_upgraded_pickaxe = data.get("has_upgraded_pickaxe", false)
 
 			# Load Mined Ores
-			mined_ores = data.get("mined_ores", {})  # Load the mined ores or initialize as empty
-			print("✅ Loaded mined ores:", mined_ores)
+			mined_ores = data.get("mined_ores", {})
 
-			# Remove mined ore nodes from the scene (using the "ores" group)
-			var ores = get_tree().get_nodes_in_group("ores")  # Access all nodes in the "ores" group
+			# Remove mined ore nodes from the scene
+			var ores = get_tree().get_nodes_in_group("ores")
 			if ores:
 				for node in ores:
-					print("Node Name:", node.name)  # Debug: Print the node name
-					print("Node Type:", node.get_class())  # Debug: Print the node type
-					
-					# Check if the node is a StaticBody2D (which should be your ore nodes)
-					if node is StaticBody2D and node.name.begins_with("CopperNode"):  # Ensure it's a StaticBody2D
+					if node is StaticBody2D and node.name.begins_with("CopperNode"):
 						var position_str = str(node.global_transform.origin.x) + "," + str(node.global_transform.origin.y)
-
-						# If the ore has been mined (exists in mined_ores), remove it from the scene
 						if mined_ores.has(position_str):
-							node.queue_free()  # Remove the ore node from the scene
-						else:
-							print("✅ Ore node at position", node.global_transform.origin, "is not mined.")
+							node.queue_free()
+
 		file.close()
 	else:
 		print("⚠️ Failed to open save file.")
 
-	# ✅ Reset is_new_game AFTER loading is complete
 	GlobalState.is_new_game = false
 
-	# ✅ Apply the player's new position after the game loads
+	# Update player position after load
 	var root = get_tree().get_root()
 	if root.has_node("TheCrossroads/Player"):
 		var player = root.get_node("TheCrossroads/Player")
 		player.call_deferred("set_global_position", player_position)
-		print("✅ Player position updated after game load:", player_position)
+		player.call_deferred("update_pickaxe_visibility")
+		print("✅ Player position and appearance updated after game load!")
 
-	# ✅ **Apply Equipped Items After Loading**
-	if get_tree().get_root().has_node("TheCrossroads/Player"):
-		var player = get_tree().get_root().get_node("TheCrossroads/Player")
-		player.call_deferred("update_pickaxe_visibility")  # ✅ Ensure player updates pickaxe visibility
+	# Update player appearance after load
+	if root.has_node("TheCrossroads/Player"):
+		var player = root.get_node("TheCrossroads/Player")
+		player.call_deferred("update_pickaxe_visibility")
 		print("✅ Player visibility updated after game load!")
+
 
 # Function for autosave (called every interval)
 func _on_autosave_timeout():
@@ -288,13 +297,30 @@ func update_equipped_items(slot_type, item_name):
 	equipped_items[slot_type] = item_name
 	save_all_data()
 
-func update_inventory(item_name, add_item: bool):
-	# Adds/removes item from inventory in GlobalState
+func update_inventory(item_path: String, add_item: bool):
+	if item_path == "":
+		print("❌ Invalid item path.")
+		return
+
 	if add_item:
-		inventory[item_name] = {"quantity": 1, "type": "pickaxe"}
+		# Try to find the item already in inventory
+		for entry in inventory:
+			if entry.path == item_path:
+				entry.quantity += 1
+				save_all_data()
+				return
+
+		# If item not found, add new entry
+		inventory.append({ "path": item_path, "quantity": 1 })
 	else:
-		inventory.erase(item_name)
+		# Remove item from inventory (all copies)
+		for i in inventory.size():
+			if inventory[i].path == item_path:
+				inventory.remove_at(i)
+				break
+
 	save_all_data()
+
 
 
 var mined_ores = {}  # Dictionary to track mined ores

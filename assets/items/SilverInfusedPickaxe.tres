@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=4 format=3 uid="uid://b4vk3elnou3bj"]
+
+[ext_resource type="Texture2D" uid="uid://dphc8by05r6x6" path="res://assets/items/silver_infused_pickaxe.png" id="1_4t6nq"]
+[ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_qg8pc"]
+[ext_resource type="Resource" uid="uid://7db2spj5y1se" path="res://StatResources/SilverInfusedPickaxeStats.tres" id="3_qg8pc"]
+
+[resource]
+script = ExtResource("2_qg8pc")
+item_name = "Silver Infused Pickaxe"
+item_type = "pickaxe"
+description = "A magical pickaxe crafted by Kragsroth which can be upgraded, given to you by Durmil the Dwarf."
+icon = ExtResource("1_4t6nq")
+can_equip = true
+equip_slot = "weapon"
+stats_resource = ExtResource("3_qg8pc")
+upgrade_path = Array[String](["[ \"res://items/GoldInfusedPickaxe.tres\" ]"])

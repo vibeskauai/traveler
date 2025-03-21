@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=3 format=3 uid="uid://8guoxnebhet7"]
+
+[ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="1_ent4o"]
+[ext_resource type="Texture2D" uid="uid://bs402ihx756rl" path="res://assets/items/dragon.png" id="1_odgie"]
+
+[resource]
+script = ExtResource("1_ent4o")
+item_name = "Dragon Ore"
+item_type = "resource"
+description = "Shiny ass dragon ore. With enough of this I can mine the Volcanic Heart."
+icon = ExtResource("1_odgie")
+can_equip = false
+equip_slot = "\"\""
+upgrade_path = Array[String]([])
+metadata/_custom_type_script = "uid://pqviyi7f4085"

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=3 format=3 uid="uid://bkj4y1h7l6ngy"]
+
+[ext_resource type="Texture2D" uid="uid://bamhi8k0ijgtl" path="res://assets/items/rune.png" id="1_fjgj5"]
+[ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="1_w5nll"]
+
+[resource]
+script = ExtResource("1_w5nll")
+item_name = "Rune Ore"
+item_type = "resource"
+description = "Scape with the Rune"
+icon = ExtResource("1_fjgj5")
+can_equip = false
+equip_slot = "\"\""
+upgrade_path = Array[String]([])
+metadata/_custom_type_script = "uid://pqviyi7f4085"

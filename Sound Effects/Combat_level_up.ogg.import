@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dic7pgtb8dfm0"
+path="res://.godot/imported/Combat_level_up.ogg-a4b1d3f8f522769547fd4f2d7099d39e.oggvorbisstr"
+
+[deps]
+
+source_file="res://Sound Effects/Combat_level_up.ogg"
+dest_files=["res://.godot/imported/Combat_level_up.ogg-a4b1d3f8f522769547fd4f2d7099d39e.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

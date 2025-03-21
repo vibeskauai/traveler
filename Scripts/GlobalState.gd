@@ -6,7 +6,7 @@ extends Node
 var last_animation_played: String = "idle"  # Default to "idle" if nothing is set
 
 signal new_game_started(new_position: Vector2)
-
+var is_game_loaded: bool = false
 # Player-related data
 var player_position : Vector2 = Vector2(43, -42)  # Default starting position (Vector2 type)
 var inventory: Array = []
@@ -144,9 +144,11 @@ func update_player_position(new_position: Vector2):
 
 # Save all game data to a file
 func save_all_data():
+
+	# Convert last facing direction into a string format for saving
 	var last_facing_str = str(last_facing_direction.x) + "," + str(last_facing_direction.y)
 
-	# Convert inventory to savable format (just path and quantity)
+	# Convert inventory to a savable format (path and quantity)
 	var serialized_inventory = []
 	for entry in inventory:
 		if entry.has("path") and entry.has("quantity"):
@@ -161,28 +163,30 @@ func save_all_data():
 		"last_animation_played": GlobalState.last_animation_played,
 		"inventory": serialized_inventory,
 		"equipped_items": equipped_items,
-		"player_xp": player_xp,
+		"player_xp": player_xp,  # Ensure player XP is included
 		"total_level": total_level,
 		"health": health,
-		"mining_xp": mining_xp,
-		"herbalism_xp": herbalism_xp,
-		"combat_xp": combat_xp,
+		"mining_xp": mining_xp,  # Ensure mining XP is included
+		"herbalism_xp": herbalism_xp,  # Ensure herbalism XP is included
+		"combat_xp": combat_xp,  # Ensure combat XP is included
 		"last_facing_direction": last_facing_str,
 		"mined_ores": mined_ores,
 		"has_spoken_to_durmil": has_spoken_to_durmil,
 		"has_upgraded_pickaxe": has_upgraded_pickaxe
 	}
 
-	# Write to file as JSON
+	# Convert the data dictionary to a JSON string
 	var json = JSON.new()
 	var json_data = json.stringify(data)
 
+	# Write the JSON data to a file
 	var file = FileAccess.open(save_file_path, FileAccess.WRITE)
 	if file:
 		file.store_string(json_data)
 		file.close()
 
 # Load all game data from a file
+# Function to load all game data from the file
 func load_game_data():
 	if not FileAccess.file_exists(save_file_path):
 		print("⚠️ No save file found, loading defaults.")
@@ -227,16 +231,23 @@ func load_game_data():
 					})
 			print("📦 [GlobalState] Loaded Inventory from Save:", inventory)
 
-			# Load Other Game Data
-			GlobalState.last_animation_played = data.get("last_animation_played", "idle")
+			# Load XP and Levels
 			player_xp = data.get("player_xp", 0)
 			total_level = data.get("total_level", 1)
 			health = data.get("health", 100)
+
+			# Load skill XP and levels
 			mining_xp = data.get("mining_xp", 0)
 			herbalism_xp = data.get("herbalism_xp", 0)
 			combat_xp = data.get("combat_xp", 0)
-			has_spoken_to_durmil = data.get("has_spoken_to_durmil", false)
-			has_upgraded_pickaxe = data.get("has_upgraded_pickaxe", false)
+
+			# Sync loaded XP to SkillStats (this is crucial for correct level-up handling)
+			SkillStats.mining_xp = mining_xp
+			SkillStats.herbalism_xp = herbalism_xp
+			SkillStats.combat_xp = combat_xp
+
+			# Ensure levels are updated after loading XP values
+			SkillStats.update_levels()  # Update levels based on loaded XP
 
 			# Load Mined Ores
 			mined_ores = data.get("mined_ores", {})
@@ -269,6 +280,7 @@ func load_game_data():
 		var player = root.get_node("TheCrossroads/Player")
 		player.call_deferred("update_pickaxe_visibility")
 		print("✅ Player visibility updated after game load!")
+
 
 
 # Function for autosave (called every interval)

@@ -5,6 +5,7 @@ extends Node
 @onready var armor_panel = get_node("/root/TheCrossroads/MainUI/ArmorPanel")  # Reference to ArmorPanel
 @onready var inventory = GlobalState.inventory  # ✅ Sync inventory reference
 @onready var player = get_tree().get_first_node_in_group("player")
+@onready var stats_panel = get_node("/root/TheCrossroads/MainUI/StatsPanel")  # Update path to StatsPanel
 
 signal equipment_changed(slot_type, item_name)  # ✅ UI updates when equipment changes
 @export var equipped_items := {
@@ -85,7 +86,6 @@ func _ready():
 
 	print("✅ [PlayerStats] Ready with inventory size:", inventory.size())
 
-
 # Function to load player stats (from GlobalState or file)
 func load_player_stats():
 	player_xp = GlobalState.player_xp
@@ -95,104 +95,52 @@ func load_player_stats():
 	herbalism_xp = GlobalState.herbalism_xp
 	combat_xp = GlobalState.combat_xp
 
-# Function to update computed skill levels based on current XP values.
-func update_skill_levels():
-	mining_level = min(int(mining_xp / 100) + 1, max_skill_level)
-	herbalism_level = min(int(herbalism_xp / 100) + 1, max_skill_level)
-	combat_level = min(int(combat_xp / 100) + 1, max_skill_level)
-	total_level = get_total_level()
-
-# Function to gain XP for a specific skill
+# Function to gain XP for a specific skill (called from other scripts)
+# Function to gain XP for a specific skill (called from other scripts)
 func gain_xp(skill: String, amount: int):
-	match skill:
-		"mining":
-			mining_xp += amount
-			check_level_up("mining")
-		"herbalism":
-			herbalism_xp += amount
-			check_level_up("herbalism")
-		"combat":
-			combat_xp += amount
-			check_level_up("combat")
-		_:
-			print("❌ Error: Unknown skill for XP gain!")
-	# After modifying XP, update the skill levels and sync stats
+	# Before adding the XP, make sure to load the current skill levels first
+	SkillStats.add_xp(skill, amount)  # Directly call SkillStats to update XP
+
+	# After XP gain, update skill levels and sync data
 	update_skill_levels()
 	sync_player_stats()
 
-# Function to check if the skill has leveled up
-func check_level_up(skill: String):
-	var xp_needed = get_xp_for_next_level(skill)
-	var current_xp = 0
-	var current_level = 0
+	# Trigger UI Update (this is where StatsPanel needs to be updated)
+	if stats_panel:
+		stats_panel.emit_signal("xp_updated")  # Emit the xp_updated signal for UI update
 
-	match skill:
-		"mining":
-			current_xp = mining_xp
-			current_level = get_skill_level("mining")
-		"herbalism":
-			current_xp = herbalism_xp
-			current_level = get_skill_level("herbalism")
-		"combat":
-			current_xp = combat_xp
-			current_level = get_skill_level("combat")
+	# Save updated data
+	GlobalState.save_all_data()  # Immediately save the updated XP and level
 
-	if current_xp >= xp_needed and current_level < max_skill_level:
-		current_level += 1
-		print(skill + " leveled up to level " + str(current_level))
-		# Optionally apply level-up rewards or bonuses here
 
-	# Update skill levels after a potential level-up and sync stats
-	update_skill_levels()
-	sync_player_stats()
-
-# Function to get XP needed for the next level for a given skill
-func get_xp_for_next_level(skill: String) -> int:
-	return 100 * (get_skill_level(skill) + 1)  # Basic XP formula; adjust as needed
-
-# Function to get the current level for a specific skill (calculated from XP)
-func get_skill_level(skill: String) -> int:
-	match skill:
-		"mining":
-			return min(int(mining_xp / 100) + 1, max_skill_level)
-		"herbalism":
-			return min(int(herbalism_xp / 100) + 1, max_skill_level)
-		"combat":
-			return min(int(combat_xp / 100) + 1, max_skill_level)
-	return 0
-
-# Function to handle leveling up (general)
-func level_up():
-	# Example: If total XP exceeds a threshold, increase total level
-	var xp_needed_for_level_up = 1000 * total_level  # Example: 1000 XP per level
-	if player_xp >= xp_needed_for_level_up:
-		total_level += 1
-		player_xp = 0  # Reset XP on level up
-		print("Level Up! New level: " + str(total_level))
-		sync_player_stats()  # Sync updated stats with GlobalState
+# Function to update skill levels based on current XP values
+func update_skill_levels():
+	# Get current skill levels from SkillStats
+	total_level = get_total_level()  # Get total level based on current skill levels
 
 # Function to calculate the total level (sum of all skill levels, capped at 70)
 func get_total_level() -> int:
-	var total_skill_level = get_skill_level("mining") + get_skill_level("herbalism") + get_skill_level("combat")
+	# Total level is the sum of the skill levels from SkillStats
+	var total_skill_level = SkillStats.get_skill_level("mining") + SkillStats.get_skill_level("herbalism") + SkillStats.get_skill_level("combat")
 	return min(total_skill_level, 70)  # Cap total level at 70
 
 # Sync player stats with GlobalState (for persistence)
 func sync_player_stats():
-	# Calculate total level (sum of skill levels)
-	total_level = get_total_level()
-
+	# Sync data to GlobalState
 	GlobalState.player_xp = player_xp
 	GlobalState.total_level = total_level
 	GlobalState.health = health
-	GlobalState.mining_xp = mining_xp
-	GlobalState.herbalism_xp = herbalism_xp
-	GlobalState.combat_xp = combat_xp
+	# Skill XP is now stored in SkillStats, no need to duplicate
+	GlobalState.mining_xp = SkillStats.mining_xp
+	GlobalState.herbalism_xp = SkillStats.herbalism_xp
+	GlobalState.combat_xp = SkillStats.combat_xp
 	
-	# Syncs up inventory and equipped items (Armor, Pickaxe and Weapons)
-	GlobalState.inventory = inventory  # Sync inventory
+	# Sync inventory and equipped items
+	GlobalState.inventory = inventory
 	GlobalState.equipped_items = equipped_items 
 
-	GlobalState.save_all_data()  # ✅ Save everything
+	# Save data after updating GlobalState
+	GlobalState.save_all_data()  # Save the state to disk
 
 func sync_with_global_state():
 	global_state.equipped_items = equipped_items

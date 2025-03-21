@@ -133,8 +133,11 @@ func start_mining():
 	# Apply XP gain for hitting the ore
 	var xp_gain = xp_on_hit.get(ore_type, 0)
 	player_stats.gain_xp("mining", xp_gain)
-	print("📌 Gained", xp_gain, "XP for hitting the ore.")
+	print("📌 Gained", xp_gain, "XP for breaking the ore.")
 
+	# Update the stats panel after gaining XP
+	player_stats.update_skill_levels()
+	GlobalState.save_all_data()  # Save the game state immediately after leveling up
 	# Check if ore is destroyed and break it, otherwise continue mining
 	if ore_health <= 0:
 		break_ore()
@@ -144,7 +147,6 @@ func start_mining():
 	# Play hit sound
 	if hit_sound:
 		hit_sound.play()
-
 
 # Start the auto-mining process (e.g., when player swings pickaxe)
 func start_auto_mining():
@@ -224,6 +226,12 @@ func break_ore():
 		print("❌ Could not load ore item from:", ore_item_path)
 		# Optionally handle the failure
 
+	var xp_gain = xp_on_break.get(ore_type, 0)
+	player_stats.gain_xp("mining", xp_gain)
+	print("📌 Gained", xp_gain, "XP for breaking the ore.")
+	player_stats.update_skill_levels()
+	GlobalState.save_all_data()  # Save the game state immediately
+	
 	var collision_shape = get_node("CollisionShape2D")
 	if collision_shape:
 		collision_shape.disabled = true

@@ -28,7 +28,7 @@ var ore_health_values := {
 }
 
 var xp_on_hit := {
-	"copper_ore": 2,
+	"copper_ore": 1,
 	"silver_ore": 3,
 	"gold_ore": 5,
 	"rune_ore": 7,
@@ -36,7 +36,7 @@ var xp_on_hit := {
 }
 
 var xp_on_break := {
-	"copper_ore": 10,
+	"copper_ore": 5,
 	"silver_ore": 15,
 	"gold_ore": 25,
 	"rune_ore": 50,

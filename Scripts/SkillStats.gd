@@ -13,6 +13,13 @@ var combat_level = 1
 # Max level for each skill
 var max_skill_level = 20
 
+# Custom XP array for each level
+var xp_per_level = [
+	100, 150, 200, 250, 300, 400, 500, 600, 700, 800,  # Levels 1-10
+	900, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600,  # Levels 11-20
+	3000, 3500, 4000, 4500, 5000, 6000, 7000, 8000, 9000, 10000  # Levels 21-30
+]
+
 signal xp_updated  # Signal for UI updates
 signal level_up  # Signal for skill level up event
 
@@ -33,10 +40,11 @@ func add_xp(skill: String, amount: int):
 		_:
 			print("❌ Error: Unknown skill for XP gain!")
 
-	# Emit signal to notify about XP change
-	emit_signal("xp_updated")
-	check_level_up(skill)  # Check if the skill leveled up
+	emit_signal("xp_updated")  # Signal for UI updates
+	check_level_up(skill)  # Directly check if the skill has leveled up
 
+
+# Function to check if a skill has leveled up
 # Function to check if a skill has leveled up
 func check_level_up(skill: String):
 	var xp_needed = get_xp_for_next_level(skill)
@@ -58,10 +66,10 @@ func check_level_up(skill: String):
 	if current_xp >= xp_needed and current_level < max_skill_level:
 		current_level += 1
 		print(skill + " leveled up to level " + str(current_level))
-		emit_signal("level_up", skill, current_level)  # Emit signal for level up
+		
+		# Instead of emitting a signal, directly call the UI function
+		update_levels()
 
-	# Update levels after checking for level up
-	update_levels()
 
 # Function to update levels based on current XP values
 func update_levels():
@@ -88,7 +96,13 @@ func get_skill_level(skill: String) -> int:
 
 # Function to get XP needed for the next level for a given skill
 func get_xp_for_next_level(skill: String) -> int:
-	return 100 * (get_skill_level(skill) + 1)  # Adjust the XP formula if needed
+	var current_level = get_skill_level(skill)
+
+	# Ensure we don't go beyond the defined levels
+	if current_level < xp_per_level.size():
+		return xp_per_level[current_level]  # Return the XP required for the next level
+	else:
+		return xp_per_level[xp_per_level.size() - 1]  # Return the max XP for the highest level
 
 # Sync XP and levels to GlobalState
 func sync_with_global_state():

@@ -163,7 +163,7 @@ show_percentage = false
 [node name="MiningLevelUpSound" type="AudioStreamPlayer2D" parent="StatsPanel"]
 position = Vector2(-818, -210)
 stream = ExtResource("8_r3ckc")
-volume_db = -5.0
+volume_db = -15.0
 
 [node name="HerbalismLevelUpSound" type="AudioStreamPlayer2D" parent="StatsPanel"]
 position = Vector2(-818, -210)

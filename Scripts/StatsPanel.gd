@@ -25,7 +25,7 @@ func _ready():
 	# Connect the xp_updated and level_up signals to their respective functions
 	skill_stats.connect("xp_updated", Callable(self, "_on_xp_updated"))
 	skill_stats.connect("level_up", Callable(self, "_on_level_up"))  # Connect level-up signal
-
+	
 	# Center the StatsPanel with a fixed size (400x300)
 	custom_minimum_size = Vector2(300, 400)
 	
@@ -85,7 +85,6 @@ func update_stats():
 		combat_progress.value = int(skill_stats.combat_xp) % 100
 		combat_progress.max_value = 100
 
-# Function to handle level-up event
 func _on_level_up(skill: String, new_level: int):
 	print(skill + " has leveled up to level " + str(new_level))
 

@@ -96,7 +96,6 @@ func load_player_stats():
 	combat_xp = GlobalState.combat_xp
 
 # Function to gain XP for a specific skill (called from other scripts)
-# Function to gain XP for a specific skill (called from other scripts)
 func gain_xp(skill: String, amount: int):
 	# Before adding the XP, make sure to load the current skill levels first
 	SkillStats.add_xp(skill, amount)  # Directly call SkillStats to update XP
@@ -111,7 +110,6 @@ func gain_xp(skill: String, amount: int):
 
 	# Save updated data
 	GlobalState.save_all_data()  # Immediately save the updated XP and level
-
 
 # Function to update skill levels based on current XP values
 func update_skill_levels():

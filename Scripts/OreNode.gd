@@ -172,13 +172,13 @@ func _on_auto_mining_tick():
 
 # Mining logic: Reduce ore health and check if the ore should break
 func mine_ore(pickaxe: Node):
-	# Ensure the ore is still alive (not already destroyed)
-	if ore_health <= 0:
-		print("🪨 Ore is already destroyed.")
-		return  # Exit if the ore is already destroyed
+	# Get the equipped pickaxe from the player stats
+	var equipped_pickaxe = player_stats.get_equipped_item("weapon")
 	
-	# Get the equipped pickaxe type from the player stats
-	var equipped_pickaxe = player_stats.get_equipped_item("pickaxe")
+	# Check if a pickaxe is equipped, if not exit early
+	if equipped_pickaxe == "" or equipped_pickaxe == "None":
+		print("❌ No pickaxe equipped, cannot mine.")
+		return  # Exit if no pickaxe is equipped
 	
 	# Get the damage value from the pickaxe_damage_values dictionary based on the equipped pickaxe
 	var damage = pickaxe_damage_values.get(equipped_pickaxe, 1)  # Default damage of 1 if pickaxe isn't found
@@ -196,6 +196,8 @@ func mine_ore(pickaxe: Node):
 	# Play the hit sound when the ore is mined
 	if hit_sound:
 		hit_sound.play()
+
+
 
 
 func break_ore():

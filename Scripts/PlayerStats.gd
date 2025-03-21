@@ -283,11 +283,26 @@ func sync_inventory_with_player():
 
 # Get the currently equipped item (for UI display, etc.)
 func get_equipped_item(item_type: String) -> String:
+	print("Getting equipped item for type:", item_type)  # Debugging the requested item type
+	
 	if item_type == "weapon":
-		return equipped_weapon.name if equipped_weapon != null else "None"
+		if equipped_weapon != null:
+			print("Equipped weapon: ", equipped_weapon.name)  # Debugging the equipped weapon
+			return equipped_weapon.name
+		else:
+			print("No weapon equipped.")  # Debugging when no weapon is equipped
+			return "None"
 	elif item_type == "armor":
-		return equipped_armor.name if equipped_armor != null else "None"
+		if equipped_armor != null:
+			print("Equipped armor: ", equipped_armor.name)  # Debugging the equipped armor
+			return equipped_armor.name
+		else:
+			print("No armor equipped.")  # Debugging when no armor is equipped
+			return "None"
+	
+	print("Invalid item type:", item_type)  # Debugging invalid item types
 	return "Invalid item type"
+
 
 # Function for autosave (called every interval)
 func _on_autosave_timeout():

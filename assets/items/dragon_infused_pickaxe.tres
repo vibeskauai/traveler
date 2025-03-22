@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://d4col7ejcd8ih" path="res://assets/items/dragon_infused_pickaxe.png" id="1_4ytb8"]
 [ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_6rkpa"]
-[ext_resource type="Resource" uid="uid://2l31svh87rkl" path="res://StatResources/DragonInfusedPickaxeStats.tres" id="3_4ytb8"]
+[ext_resource type="Resource" uid="uid://2l31svh87rkl" path="res://StatResources/dragon_infused_pickaxe_stats.tres" id="3_4ytb8"]
 
 [resource]
 script = ExtResource("2_6rkpa")

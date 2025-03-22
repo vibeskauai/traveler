@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://cq11djjablkyv" path="res://assets/items/rune_infused_pickaxe.png" id="1_2c273"]
 [ext_resource type="Script" uid="uid://pqviyi7f4085" path="res://Scripts/ItemResource.gd" id="2_twymc"]
-[ext_resource type="Resource" uid="uid://tj4xtsktqhgk" path="res://StatResources/RuneInfusedPickaxeStats.tres" id="3_twymc"]
+[ext_resource type="Resource" uid="uid://tj4xtsktqhgk" path="res://StatResources/rune_infused_pickaxe_stats.tres" id="3_twymc"]
 
 [resource]
 script = ExtResource("2_twymc")
@@ -13,4 +13,4 @@ icon = ExtResource("1_2c273")
 can_equip = true
 equip_slot = "weapon"
 stats_resource = ExtResource("3_twymc")
-upgrade_path = Array[String](["[ \"res://items/DragonInfusedPickaxe.tres\" ]"])
+upgrade_path = Array[String](["[ \"res://items/dragon_infused_pickaxe.tres\" ]"])

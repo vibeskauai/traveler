@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://bq45ki5t54ivj"]
 
 [ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/OreNode.gd" id="1_0p3v3"]
-[ext_resource type="Texture2D" uid="uid://c5c5cr23le83j" path="res://assets/OreNodes/SilverNode.png" id="2_a53wk"]
+[ext_resource type="Texture2D" uid="uid://c5c5cr23le83j" path="res://assets/OreNodes/silver_node.png" id="2_a53wk"]
 [ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_iwcwv"]
 [ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_5hmov"]
 

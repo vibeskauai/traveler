@@ -7,6 +7,7 @@ var swing_timer = 0.0  # Timer to track cooldown for swing animation
 # Reference to AnimatedSprite2D node
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
+@onready var player = get_tree().get_first_node_in_group("player")  # Get the player node
 @onready var player_stats = get_node("/root/PlayerStats")  # Assuming PlayerStats is a singleton or part of the scene
 @onready var raycast = $RayCast2D  # Access the RayCast2D node
 @onready var global_state = GlobalState  # Reference to the GlobalState singleton
@@ -15,18 +16,19 @@ var swing_timer = 0.0  # Timer to track cooldown for swing animation
 @onready var armor_panel = get_tree().get_first_node_in_group("armor_ui")  # Find Armor UI dynamically
 @onready var pickaxe_hitbox := $PickaxeSprite/hitbox
 @onready var main_ui = get_tree().get_first_node_in_group("main_ui")
-
-var is_mining: bool = false  # Track if the player is currently mining
-var target_ore: Node = null  # The ore the player is mining
+@export var ore_type: String = ""
 
 var equipped_item = null  # Currently equipped item
-var automining = false  # Track if the player is automining
+
+var is_auto_mining: bool = false  # Flag to track whether auto-mining is active
+var target_ore: Node = null  # Target ore to mine
+var is_mining: bool = false  # Flag to track mining status
+var is_swinging = false
 
 # Variable to store last movement direction animation name
 var last_direction = ""  # This can be "walk_right", "walk_left", "walk_down", "walk_up"
 var last_position: Vector2 = Vector2(0, 0)  # Store last position to detect changes
 # Track if the swing animation is already playing
-var is_swinging = false
 
 func _ready():
 	# When the game or scene starts, load the last animation from GlobalState
@@ -70,9 +72,12 @@ func _ready():
 		item.connect("picked_up", Callable(self, "_on_item_picked_up"))
 
 func _process(delta):
-	if is_mining and target_ore and target_ore.is_inside_tree():
-		mine_target_ore()
-
+	# Ensure that auto-mining stops if the player moves away from the ore
+	if is_auto_mining and target_ore:
+		var distance = global_position.distance_to(target_ore.global_position)  # Measure distance to ore
+		if distance > 50:  # If the player is more than 50 units away, stop auto-mining
+			print("❌ Player walked away from ore, stopping auto-mining.")  # Debug output
+			stop_auto_mining()  # Stop the auto-mining
 	# Update input vector for facing direction
 	var input_vector: Vector2 = Vector2(
 		Input.get_action_strength("walk_right") - Input.get_action_strength("walk_left"),
@@ -80,7 +85,7 @@ func _process(delta):
 	)
 	
 	update_pickaxe_visibility()  # Ensures visibility is always correct
-	
+		
 	if input_vector != Vector2.ZERO:
 		input_vector = input_vector.normalized()
 		GlobalState.update_last_facing_direction(input_vector)
@@ -162,14 +167,11 @@ func _process(delta):
 				animation_player.seek(0)  # Ensures we start from the first frame of the walk_up animation
 	
 	# Check for swing input
+	# Check for swing input
 	if Input.is_action_just_pressed("swing") and swing_timer <= 0.0 and not is_swinging:
 		is_swinging = true
-		perform_swing()
+		perform_swing()  # Call to perform the swing animation and check for auto-mining
 
-		# Play the swing animation based on the current walking direction with pickaxe
-		var swing_anim = get_swing_animation(last_direction)
-		animation_player.play(swing_anim)
-	
 	# Swing logic (if any)
 	if swing_timer > 0.0:
 		swing_timer -= delta
@@ -391,9 +393,22 @@ func update_inventory_panel():
 func _on_area_2d_area_entered(area: Area2D) -> void:
 	pass # Replace with function body.
 
-# Function to ensure hitbox is active during swing
+# Function to return the swing animation based on the last movement direction
+func get_swing_animation() -> String:
+	var direction = GlobalState.last_facing_direction  # Get direction from GlobalState
+
+	if direction.x > 0:
+		return "swing_right_with_pickaxe"
+	elif direction.x < 0:
+		return "swing_left_with_pickaxe"
+	elif direction.y > 0:
+		return "swing_down_with_pickaxe"  # Swing downward
+	elif direction.y < 0:
+		return "swing_up_with_pickaxe"  # Swing upward
+	return ""  # Default to empty string if no valid direction
+
 func perform_swing():
-	var swing_animation = get_swing_animation(last_direction)
+	var swing_animation = get_swing_animation()
 
 	if swing_animation != "":
 		# Play the correct swing animation
@@ -402,87 +417,52 @@ func perform_swing():
 
 		# Ensure the pickaxe hitbox is enabled during the swing
 		var pickaxe_hit_area = $PickaxeSprite/hitbox  # Assuming hitbox is an Area2D
-
 		if pickaxe_hit_area:
 			pickaxe_hit_area.monitoring = true  # Ensure monitoring is enabled
 
 			# Check for interaction with ores using the hit area
-			var ore = detect_ore_in_swing_area(pickaxe_hit_area)
-			if ore:
-				print("⛏️ Ore detected during swing:", ore.name)  # Debug output
+			var ore_node = null
+			var collided_areas = pickaxe_hit_area.get_overlapping_areas()
 
-				# Start mining without passing arguments
-				ore.start_mining()
+			print("⛏️ Collided areas count: ", collided_areas.size())  # Debug output
+			for area in collided_areas:
+				print("⛏️ Area found:", area.name)  # Debug output
+				if area.is_in_group("ores"):  # Ensure that we're detecting ore nodes
+					ore_node = area.get_parent()  # Get the parent node (OreNode)
+					print("⛏️ Ore node detected:", ore_node.ore_type)  # Debug output (Checking ore_type)
+					break  # Stop the loop once the ore is found
+
+			if ore_node:
+				print("⛏️ Ore detected during swing:", ore_node.ore_type)  # Debug output
+				# Trigger auto-mining if enabled and ore type matches
+				if is_auto_mining:
+					print("⛏️ Auto-mining flag is TRUE. Starting auto-mining for ore:", ore_node.ore_type)  # Debug output
+					target_ore = ore_node  # Set the target ore for auto-mining
+					start_auto_mining()  # Start auto-mining
+				else:
+					print("⛏️ Auto-mining flag is FALSE. Setting it to TRUE.")  # Debug output
+					is_auto_mining = true  # Set the auto-mining flag to true
+					target_ore = ore_node  # Set the target ore for auto-mining
+					start_auto_mining()  # Start auto-mining
 
 
-# Function to return the swing animation based on the last movement direction
-func get_swing_animation(direction: String) -> String:
-	match direction:
-		"walk_right":
-			return "swing_right_with_pickaxe"
-		"walk_left":
-			return "swing_left_with_pickaxe"
-		"walk_down":
-			return "swing_down_with_pickaxe"  # Ensure the correct swing animation for downward direction
-		"walk_up":
-			return "swing_up_with_pickaxe"
-		_:
-			return ""  # No valid direction or default to empty string
-
-# Function to detect if an ore is in the swing area (collision detection)
-func detect_ore_in_swing_area(hitbox: Area2D) -> Node:
-	var collided_areas = hitbox.get_overlapping_areas()
-
-	print("Checking for ores in hitbox")  # Debug message
-
-	for area in collided_areas:
-		if area.is_in_group("ores"):  # Updated to check "ores" group
-			print("Detected ore:", area.get_parent().name)  # Debug output
-			return area.get_parent()  # Return the ore node
-	return null
-
-# --- Auto-mining Section ---
 func start_auto_mining():
 	if not target_ore:
-		return
+		print("❌ No target ore set for auto-mining!")  # Debug output
+		return  # Ensure we have a target ore to mine
 
 	is_mining = true
-	print("⛏️ Auto-mining started on", target_ore.ore_type)
+	print("⛏️ Auto-mining started on", target_ore.ore_type)  # Debug output
 
-	mine_target_ore()
+	# Start the mining loop immediately (now in OreNode.gd)
+	target_ore.start_auto_mining()  # This will now handle the mining in OreNode.gd
 
-func mine_target_ore():
-	if not target_ore or not is_mining:
-		return
 
-	var equipped_path = PlayerStats.get_equipped_item("pickaxe")
-	if equipped_path == "":
-		print("❌ No pickaxe equipped!")
-		return
+func stop_auto_mining():
+	if not is_auto_mining:
+		return  # Auto-mining is already stopped
 
-	var equipped_pickaxe = load(equipped_path)
-	if not (equipped_pickaxe and equipped_pickaxe is ItemResource):
-		print("❌ Failed to load equipped pickaxe resource!")
-		return
-
-	target_ore.mine_ore(equipped_pickaxe, self)
-	animation_player.play("mine_swing")
-
-	await get_tree().create_timer(0.5).timeout  # Delay for auto-mining loop
-	if is_mining:
-		mine_target_ore()
-
-func _on_pickaxe_hit(area):
-	if area and area.is_in_group("ores"):
-		var ore = area.get_parent()
-		var equipped_path = PlayerStats.get_equipped_item("pickaxe")
-
-		if equipped_path != "":
-			var equipped_pickaxe = load(equipped_path)
-			if equipped_pickaxe and equipped_pickaxe is ItemResource:
-				print("⛏️ Mining with:", equipped_pickaxe.item_name)
-				ore.mine_ore(equipped_pickaxe, self)
-			else:
-				print("❌ Failed to load pickaxe resource:", equipped_path)
-		else:
-			print("❌ No pickaxe equipped!")
+	print("⛏️ Stopping auto-mining.")  # Debug output
+	is_auto_mining = false
+	target_ore = null  # Clear the target ore
+	is_mining = false  # Set mining flag to false

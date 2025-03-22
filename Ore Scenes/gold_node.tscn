@@ -1,9 +1,9 @@
 [gd_scene load_steps=8 format=3 uid="uid://ds4faxqg81ciu"]
 
-[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/OreNode.gd" id="1_k1ab6"]
-[ext_resource type="Texture2D" uid="uid://0sip6vkculsj" path="res://assets/OreNodes/GoldNode.png" id="2_rjao2"]
-[ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_0rohm"]
-[ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_cuy7l"]
+[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/OreNode.gd" id="1_roy8d"]
+[ext_resource type="Texture2D" uid="uid://0sip6vkculsj" path="res://assets/OreNodes/gold_node.png" id="2_cvck6"]
+[ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_vaqwj"]
+[ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_68oy1"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rjao2"]
 size = Vector2(36.6781, 19.4535)
@@ -19,13 +19,13 @@ b = Vector2(12.755, 7)
 z_index = -1
 scale = Vector2(0.812852, 0.812852)
 collision_layer = 2
-script = ExtResource("1_k1ab6")
+script = ExtResource("1_roy8d")
 ore_type = "gold"
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, 1)
 scale = Vector2(1.53, 1.53)
-texture = ExtResource("2_rjao2")
+texture = ExtResource("2_cvck6")
 
 [node name="CollisionShape2D4" type="CollisionShape2D" parent="."]
 position = Vector2(0.615118, 8.72677)
@@ -53,11 +53,11 @@ theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 16
 
 [node name="HitSound" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_0rohm")
+stream = ExtResource("3_vaqwj")
 volume_db = -2.0
 
 [node name="BreakSound" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_cuy7l")
+stream = ExtResource("4_68oy1")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="."]
 position = Vector2(3.69071, -9.84189)

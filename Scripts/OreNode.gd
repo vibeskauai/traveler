@@ -28,7 +28,7 @@ var ore_health_values := {
 }
 
 var xp_on_hit := {
-	"copper_ore": 1,
+	"copper_ore": 2,
 	"silver_ore": 3,
 	"gold_ore": 5,
 	"rune_ore": 7,
@@ -36,7 +36,7 @@ var xp_on_hit := {
 }
 
 var xp_on_break := {
-	"copper_ore": 5,
+	"copper_ore": 10,
 	"silver_ore": 15,
 	"gold_ore": 25,
 	"rune_ore": 50,
@@ -63,8 +63,14 @@ var pickaxe_damage_values := {
 
 # Called when the ore is ready (initialize ore health and load texture)
 func _ready():
+	# Initialize the timer for auto-mining
+	auto_mining_timer = Timer.new()  # Create a new timer
+	auto_mining_timer.wait_time = 1  # Set the timer interval to 1 second (adjustable)
+	auto_mining_timer.connect("timeout", Callable(self, "_on_auto_mining_tick"))  # Connect the timer to the tick function
+	add_child(auto_mining_timer)  # Add the timer as a child node of this ore node
+	auto_mining_timer.stop()  # Initially stop the timer until auto-mining starts
+
 	# Derive ore type from the node's scene name (e.g., CopperNode -> copper_ore)
-	# Get the correct ore type from the scene's defined ore type (e.g., copper, silver, etc.)
 	ore_type = self.ore_type.to_lower() + "_ore"
 
 	# Set ore health based on the ore type
@@ -72,44 +78,33 @@ func _ready():
 
 	# Ensure the sprite texture is loaded correctly
 	var texture_path = "res://assets/OreNodes/" + ore_type + ".png"
-
-	# Load texture for the ore sprite
 	if FileAccess.file_exists(texture_path):
 		sprite.texture = load(texture_path)
 		print("✅ Loaded texture for:", ore_type)
 	else:
-		sprite.texture = load("res://assets/OreNodes/CopperNode.png")  # Fallback to default texture if not found
+		sprite.texture = load("res://assets/OreNodes/copper_node.png")  # Fallback to default texture if not found
 
 	# Connect hitbox area detection
 	if hitbox:
 		hitbox.connect("area_entered", Callable(self, "_on_hit"))
 
-	# Setup auto-mining timer
-	auto_mining_timer = Timer.new()
-	auto_mining_timer.wait_time = 1  # Time in seconds between auto-mining actions
-	auto_mining_timer.connect("timeout", Callable(self, "_on_auto_mining_tick"))
-	add_child(auto_mining_timer)  # Add timer to the scene
-	auto_mining_timer.stop()  # Initially stop the timer
-
 	# Ensure visibility if ore is still present
 	sprite.visible = true
 
+func _process(delta):
+	if is_auto_mining and player.position.distance_to(global_position) < 50:  # Distance threshold
+		start_auto_mining()
+
 # Detect when the player swings the pickaxe and hits the ore
 func _on_hit(area):
-	# Check if the area is the pickaxe hitbox
-	if area == $PickaxeSprite/hitbox:  # Assuming the pickaxe hitbox is a child of PickaxeSprite
-		print("⛏️ Ore detected during swing:", ore_type)
-		
-		# Continue with mining logic...
-		if Input.is_action_just_pressed("mine_ore"):
-			is_manual_mining = true
-			print("🔨 Manual mining started!")
-		else:
-			is_manual_mining = false  # Auto-mining
-			print("⛏️ Auto mining started!")
+	if area == $PickaxeSprite/hitbox:  # Ensure the pickaxe hitbox is the one being hit
+		print("⛏️ Ore detected during swing:", ore_type)  # Debug output
 
-		# Start mining
-		start_mining()
+		# Start auto-mining if the auto-mine flag is true
+		if is_auto_mining:
+			print("⛏️ Starting auto-mining for ore:", ore_type)  # Debug output
+			start_auto_mining()  # Start auto-mining
+
 
 # Start the mining process
 func start_mining():
@@ -122,13 +117,9 @@ func start_mining():
 		if pickaxe and pickaxe is ItemResource:
 			damage = pickaxe.stats_resource.stats.get("mining_power", 1)  # Default to 1 if not found
 
-	# Apply manual mining bonus if active
-	if is_manual_mining:
-		damage *= 1.25  # Increase damage by 25% for manual mining
-
-	# Reduce ore health, ensuring it doesn't go below 0
+	# Apply auto-mining damage
 	ore_health = max(ore_health - damage, 0)
-	print("Ore health after mining:", ore_health)
+	print("Ore health after auto-mining:", ore_health)
 
 	# Apply XP gain for hitting the ore
 	var xp_gain = xp_on_hit.get(ore_type, 0)
@@ -138,6 +129,7 @@ func start_mining():
 	# Update the stats panel after gaining XP
 	player_stats.update_skill_levels()
 	GlobalState.save_all_data()  # Save the game state immediately after leveling up
+
 	# Check if ore is destroyed and break it, otherwise continue mining
 	if ore_health <= 0:
 		break_ore()
@@ -148,60 +140,58 @@ func start_mining():
 	if hit_sound:
 		hit_sound.play()
 
-# Start the auto-mining process (e.g., when player swings pickaxe)
+func detect_ore_in_swing_area(hitbox: Area2D) -> Node:
+	var collided_areas = hitbox.get_overlapping_areas()
+
+	for area in collided_areas:
+		if area.is_in_group("ores"):  # Ensure it's an ore group
+			print("Detected ore:", area.name)  # Debug output
+			return area  # Return the OreNode itself, not the ore data
+	return null
+
+
+# Start the auto-mining process (called by Player.gd)
 func start_auto_mining():
 	if is_auto_mining:
 		return  # Don't start multiple mining processes
 
-	print("⛏️ Starting auto-mining on", ore_type)
+	print("⛏️ Starting auto-mining on", ore_type)  # Debug output
 	is_auto_mining = true
 	auto_mining_timer.start()  # Start the timer for auto-mining
 
-# Stop the auto-mining process (e.g., when ore is destroyed or player moves away)
+
 func stop_auto_mining():
 	if not is_auto_mining:
 		return  # Auto-mining is already stopped
 
-	print("⛏️ Stopping auto-mining on", ore_type)
+	print("⛏️ Stopping auto-mining on", ore_type)  # Debug output
 	is_auto_mining = false
 	auto_mining_timer.stop()  # Stop the auto-mining timer
 
-# This function is called every time the auto-mining timer times out
 func _on_auto_mining_tick():
 	if ore_health <= 0:
-		break_ore()
-		stop_auto_mining()
+		print("🪨 Ore health is 0, breaking ore.")  # Debug output
+		break_ore()  # Break the ore
+		stop_auto_mining()  # Stop the timer once the ore is broken
 		return
 
-	var damage = 1
+	# Retrieve the equipped pickaxe from PlayerStats
 	var pickaxe_path = player_stats.get_equipped_item("pickaxe")
 
-	if pickaxe_path != "":
+	if pickaxe_path != "":  # Ensure a pickaxe is equipped
 		var pickaxe = load(pickaxe_path)
 		if pickaxe and pickaxe is ItemResource:
-			damage = pickaxe.stats.get("mining_power", 1)
+			print("⛏️ Mining with pickaxe:", pickaxe.item_name)  # Debug output
 
-	ore_health -= damage
-	print("Ore health after auto-mining:", ore_health)
-
-	if hit_sound:
-		hit_sound.play()
-
-# Mining logic: Reduce ore health and check if the ore should break
-func mine_ore(pickaxe: ItemResource, player: Node):
-	if not pickaxe or not (pickaxe is ItemResource):
-		print("❌ Invalid or missing pickaxe during mining.")
-		return
-
-	var damage = pickaxe.stats.get("mining_power", 1)
-	ore_health -= damage
-	print("Ore health after mining:", ore_health)
-
-	if ore_health <= 0:
-		break_ore()
-		print("🪨 Ore destroyed!")
-	else:
-		print("Ore health is not yet 0, continue mining.")
+			# Directly access the StatsResource from the pickaxe
+			var stats_resource = pickaxe.stats_resource  # Direct reference to the StatsResource
+			if stats_resource:
+				# Get mining power from the StatsResource
+				var damage = stats_resource.stats.get("mining_power", 1)  # Default to 1 if mining power is not found
+				ore_health -= damage
+				print("Ore health after auto-mining:", ore_health)  # Debug output
+			else:
+				print("❌ Missing StatsResource for pickaxe!")  # Debug output
 
 	if hit_sound:
 		hit_sound.play()

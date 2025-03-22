@@ -1200,6 +1200,7 @@ script = ExtResource("2_stqit")
 target_position = Vector2(0, 24)
 
 [node name="PickaxeSprite" type="Sprite2D" parent="."]
+visible = false
 z_index = 1
 position = Vector2(-13, 3)
 rotation = -2.39353

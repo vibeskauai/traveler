@@ -1,9 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://bhmjmxxaiyura"]
+[gd_scene load_steps=7 format=3 uid="uid://c6tugwkce6af2"]
 
-[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/OreNode.gd" id="1_tsq75"]
-[ext_resource type="Texture2D" uid="uid://bre86j3t50ocd" path="res://assets/OreNodes/DragonNode.png" id="2_pwmwm"]
-[ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_j1rq0"]
-[ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_swbcp"]
+[ext_resource type="Script" uid="uid://b1lbhmua01k5v" path="res://Scripts/OreNode.gd" id="1_dbvht"]
+[ext_resource type="Texture2D" uid="uid://c8uqcx1yqlnat" path="res://assets/OreNodes/rune_node.png" id="2_hah2l"]
+[ext_resource type="AudioStream" uid="uid://b7mo0nms4wtjp" path="res://Sound Effects/mining sound effect.mp3" id="3_puid7"]
+[ext_resource type="AudioStream" uid="uid://fahiinq63qr5" path="res://Sound Effects/rock breaking.mp3" id="4_mwsyv"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pjty1"]
 radius = 13.1529
@@ -11,27 +11,25 @@ radius = 13.1529
 [sub_resource type="CircleShape2D" id="CircleShape2D_wn22y"]
 radius = 15.0333
 
-[node name="DragonOre" type="StaticBody2D" groups=["ores"]]
+[node name="RuneOre" type="StaticBody2D" groups=["ores"]]
 z_index = -1
 collision_layer = 2
-script = ExtResource("1_tsq75")
-ore_type = "dragon"
+script = ExtResource("1_dbvht")
+ore_type = "rune"
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.922952, 0.922952)
-texture = ExtResource("2_pwmwm")
+scale = Vector2(1.53, 1.53)
+texture = ExtResource("2_hah2l")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-scale = Vector2(1.68762, 1.68762)
 shape = SubResource("CircleShape2D_pjty1")
 
 [node name="Hitbox" type="Area2D" parent="."]
 position = Vector2(-11, 3)
-scale = Vector2(1.68762, 1.68762)
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(5.9255, 0)
+position = Vector2(11, -3)
 shape = SubResource("CircleShape2D_wn22y")
 
 [node name="PopUpLabel" type="Label" parent="."]
@@ -46,8 +44,8 @@ theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 16
 
 [node name="HitSound" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_j1rq0")
+stream = ExtResource("3_puid7")
 volume_db = -2.0
 
 [node name="BreakSound" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_swbcp")
+stream = ExtResource("4_mwsyv")

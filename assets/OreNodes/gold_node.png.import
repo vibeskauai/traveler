@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bre86j3t50ocd"
-path="res://.godot/imported/DragonNode.png-7d73da12346e391f4ed2918a85e226be.ctex"
+uid="uid://0sip6vkculsj"
+path="res://.godot/imported/gold_node.png-eb96840ea9852d21e72823bc65b1020c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/OreNodes/DragonNode.png"
-dest_files=["res://.godot/imported/DragonNode.png-7d73da12346e391f4ed2918a85e226be.ctex"]
+source_file="res://assets/OreNodes/gold_node.png"
+dest_files=["res://.godot/imported/gold_node.png-eb96840ea9852d21e72823bc65b1020c.ctex"]
 
 [params]
 

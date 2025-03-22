@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://0sip6vkculsj"
-path="res://.godot/imported/GoldNode.png-8a42ab3f06d87935ee8dc5887bd3f6c0.ctex"
+uid="uid://c8iby7ryvral2"
+path="res://.godot/imported/copper_node.png-622bda89a993f54dec73d3679d97135e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/OreNodes/GoldNode.png"
-dest_files=["res://.godot/imported/GoldNode.png-8a42ab3f06d87935ee8dc5887bd3f6c0.ctex"]
+source_file="res://assets/OreNodes/copper_node.png"
+dest_files=["res://.godot/imported/copper_node.png-622bda89a993f54dec73d3679d97135e.ctex"]
 
 [params]
 

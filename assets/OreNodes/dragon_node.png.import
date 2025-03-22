@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5c5cr23le83j"
-path="res://.godot/imported/SilverNode.png-a4c6d54650208abcca177dde19591147.ctex"
+uid="uid://bre86j3t50ocd"
+path="res://.godot/imported/dragon_node.png-202272a339a80d7e3a2501cfadaf1556.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/OreNodes/SilverNode.png"
-dest_files=["res://.godot/imported/SilverNode.png-a4c6d54650208abcca177dde19591147.ctex"]
+source_file="res://assets/OreNodes/dragon_node.png"
+dest_files=["res://.godot/imported/dragon_node.png-202272a339a80d7e3a2501cfadaf1556.ctex"]
 
 [params]
 

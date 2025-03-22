@@ -2,7 +2,7 @@ extends CharacterBody2D
 
 var speed = 65  # Walking speed
 var swing_cooldown = 0.5  # Cooldown time for swing in seconds
-var swing_timer = 0.0  # Timer to track cooldown for swing animation
+var swing_timer = 0.3  # Timer to track cooldown for swing animation
 
 # Reference to AnimatedSprite2D node
 @onready var sprite = $Sprite2D
@@ -72,143 +72,113 @@ func _ready():
 		item.connect("picked_up", Callable(self, "_on_item_picked_up"))
 
 func _process(delta):
-	# Ensure that auto-mining stops if the player moves away from the ore
+	var direction = Vector2.ZERO  # Initialize direction
+
+	# Handle swing input
+	if Input.is_action_just_pressed("swing") and swing_timer <= 0 and not is_swinging:
+		is_swinging = true
+		perform_swing()  # Trigger the swing and start the animation
+
+	# Handle auto-mining logic
 	if is_auto_mining and target_ore:
-		var distance = global_position.distance_to(target_ore.global_position)  # Measure distance to ore
-		if distance > 50:  # If the player is more than 50 units away, stop auto-mining
-			print("❌ Player walked away from ore, stopping auto-mining.")  # Debug output
-			stop_auto_mining()  # Stop the auto-mining
-	# Update input vector for facing direction
+		var distance = global_position.distance_to(target_ore.global_position)
+		if distance > 50:  # Stop auto-mining if player is too far from the ore
+			print("❌ Player walked away from ore, stopping auto-mining.")
+			stop_auto_mining()
+
+	# Handle movement input
 	var input_vector: Vector2 = Vector2(
 		Input.get_action_strength("walk_right") - Input.get_action_strength("walk_left"),
 		Input.get_action_strength("walk_down") - Input.get_action_strength("walk_up")
 	)
-	
-	update_pickaxe_visibility()  # Ensures visibility is always correct
-		
+
+	# Normalize the input vector to avoid faster diagonal movement
 	if input_vector != Vector2.ZERO:
 		input_vector = input_vector.normalized()
-		GlobalState.update_last_facing_direction(input_vector)
-	
-	# Save position if changed
-	if position != last_position:
-		last_position = position
-		save_player_position()  # Trigger position save whenever position changes
 
-	var velocity: Vector2 = Vector2.ZERO
-	var current_direction: String = ""
-	
-	# If swinging, stop movement (set velocity to zero)
+	# Update the player's facing direction based on input
+	if input_vector != Vector2.ZERO:
+		GlobalState.update_last_facing_direction(input_vector)
+
+	# Apply movement (only if not swinging)
+	if !is_swinging:
+		# Apply the movement direction and speed to the velocity
+		velocity = input_vector * speed  # Set velocity directly based on input and speed
+
+	# Move the player
+	move_and_slide()  # No need to pass the velocity, it's handled automatically by CharacterBody2D
+
+	# Update walking animation if player is not swinging
+	if !is_swinging:
+		update_movement_animation()
+
+	# Update swing timer and stop swing when done
+	if swing_timer > 0:
+		swing_timer -= delta  # Decrease swing cooldown
+	if is_swinging and !animation_player.is_playing():  # Check if the swing animation finished
+		is_swinging = false
+		reset_to_last_direction_animation()
+
+	sync_player_position()  # Sync player position for save/load or updates
+
+
+# Update the player velocity while handling swinging logic
+func update_player_velocity() -> Vector2:
 	if is_swinging:
-		velocity = Vector2.ZERO
+		# Prevent movement when swinging
+		return Vector2.ZERO
 	else:
-		# Gather movement input
+		# Gather movement input and calculate velocity
+		var velocity: Vector2 = Vector2.ZERO
 		if Input.is_action_pressed("walk_right"):
 			velocity.x += 1
-			current_direction = "walk_right"
 		if Input.is_action_pressed("walk_left"):
 			velocity.x -= 1
-			current_direction = "walk_left"
 		if Input.is_action_pressed("walk_down"):
 			velocity.y += 1
-			current_direction = "walk_down"
 		if Input.is_action_pressed("walk_up"):
 			velocity.y -= 1
-			current_direction = "walk_up"
-	
+
 		# Normalize movement vector and scale by speed
 		if velocity != Vector2.ZERO:
 			velocity = velocity.normalized() * speed
-	
-	# If the player is moving, update last_direction and play the corresponding walk animation (if not swinging)
-	if velocity.length() > 0 and not is_swinging:
-		last_direction = current_direction
-
-		# Check if the pickaxe is equipped by referencing GlobalState.equipped_items
-		var is_pickaxe_equipped = "pickaxe" in GlobalState.equipped_items  # Check if "pickaxe" is in the equipped items list
 		
-		if is_pickaxe_equipped:
-			# Play the walking with pickaxe animations
-			match current_direction:
-				"walk_right":
-					animation_player.play("walk_right_with_pickaxe")
-				"walk_left":
-					animation_player.play("walk_left_with_pickaxe")
-				"walk_down":
-					animation_player.play("walk_down_with_pickaxe")
-				"walk_up":
-					animation_player.play("walk_up_with_pickaxe")
-		else:
-			# Play regular walking animations without the pickaxe
-			match current_direction:
-				"walk_right":
-					animation_player.play("walk_right")
-				"walk_left":
-					animation_player.play("walk_left")
-				"walk_down":
-					animation_player.play("walk_down")
-				"walk_up":
-					animation_player.play("walk_up")
-	# If swinging, we let the swing animation take priority
-	elif not is_swinging:
-		# When idle, use the last_direction to display the correct animation (play first frame of last direction)
+		return velocity
+
+# Handle movement animation when not swinging
+func update_movement_animation():
+	var current_direction = ""
+	if Input.is_action_pressed("walk_right"):
+		current_direction = "walk_right"
+	elif Input.is_action_pressed("walk_left"):
+		current_direction = "walk_left"
+	elif Input.is_action_pressed("walk_down"):
+		current_direction = "walk_down"
+	elif Input.is_action_pressed("walk_up"):
+		current_direction = "walk_up"
+
+	# Only play walking animations when the pickaxe is equipped
+	if "pickaxe" in GlobalState.equipped_items:
+		animation_player.play(current_direction + "_with_pickaxe")
+	else:
+		animation_player.play(current_direction)
+
+# Reset to last direction animation after swing finishes
+func reset_to_last_direction_animation():
+	var last_direction = GlobalState.last_facing_direction
+	if "pickaxe" in GlobalState.equipped_items:
 		match last_direction:
-			"walk_right":
-				animation_player.play("walk_right")
-				animation_player.seek(0)  # Ensures we start from the first frame of the walk_right animation
-			"walk_left":
-				animation_player.play("walk_left")
-				animation_player.seek(0)  # Ensures we start from the first frame of the walk_left animation
-			"walk_down":
-				animation_player.play("walk_down")
-				animation_player.seek(0)  # Ensures we start from the first frame of the walk_down animation
-			"walk_up":
-				animation_player.play("walk_up")
-				animation_player.seek(0)  # Ensures we start from the first frame of the walk_up animation
-	
-	# Check for swing input
-	# Check for swing input
-	if Input.is_action_just_pressed("swing") and swing_timer <= 0.0 and not is_swinging:
-		is_swinging = true
-		perform_swing()  # Call to perform the swing animation and check for auto-mining
-
-	# Swing logic (if any)
-	if swing_timer > 0.0:
-		swing_timer -= delta
-	
-	# If the swing animation has finished playing, return to walking animation and reset to the first frame
-	if is_swinging and not animation_player.is_playing():
-		is_swinging = false
-
-		# After the swing is done, return to the walking animation in the last direction with pickaxe
-		if "pickaxe" in GlobalState.equipped_items:
-			match last_direction:
-				"walk_right":
-					animation_player.play("walk_right_with_pickaxe")
-				"walk_left":
-					animation_player.play("walk_left_with_pickaxe")
-				"walk_down":
-					animation_player.play("walk_down_with_pickaxe")
-				"walk_up":
-					animation_player.play("walk_up_with_pickaxe")
-			animation_player.seek(0)  # Reset to the first frame of the walking animation
-		else:
-			match last_direction:
-				"walk_right":
-					animation_player.play("walk_right")
-				"walk_left":
-					animation_player.play("walk_left")
-				"walk_down":
-					animation_player.play("walk_down")
-				"walk_up":
-					animation_player.play("walk_up")
-			animation_player.seek(0)  # Reset to the first frame of the walking animation
-	
-	# Update movement and position
-	self.velocity = velocity
-	move_and_slide()
-	sync_player_position()
-
+			"walk_right": animation_player.play("walk_right_with_pickaxe")
+			"walk_left": animation_player.play("walk_left_with_pickaxe")
+			"walk_down": animation_player.play("walk_down_with_pickaxe")
+			"walk_up": animation_player.play("walk_up_with_pickaxe")
+	else:
+		match last_direction:
+			"walk_right": animation_player.play("walk_right")
+			"walk_left": animation_player.play("walk_left")
+			"walk_down": animation_player.play("walk_down")
+			"walk_up": animation_player.play("walk_up")
+	animation_player.seek(0)  # Ensure the animation starts from the first frame
 
 # Function to change the animation and update GlobalState
 func change_animation(animation_name: String):
@@ -396,7 +366,6 @@ func _on_area_2d_area_entered(area: Area2D) -> void:
 # Function to return the swing animation based on the last movement direction
 func get_swing_animation() -> String:
 	var direction = GlobalState.last_facing_direction  # Get direction from GlobalState
-
 	if direction.x > 0:
 		return "swing_right_with_pickaxe"
 	elif direction.x < 0:
@@ -407,13 +376,17 @@ func get_swing_animation() -> String:
 		return "swing_up_with_pickaxe"  # Swing upward
 	return ""  # Default to empty string if no valid direction
 
+# Perform the swing animation
 func perform_swing():
-	var swing_animation = get_swing_animation()
+	if swing_timer <= 0:  # Ensure the cooldown has passed
+		var swing_animation = get_swing_animation()
 
-	if swing_animation != "":
-		# Play the correct swing animation
-		animation_player.play(swing_animation)
-		swing_timer = swing_cooldown  # Reset swing timer
+		if swing_animation != "":
+			print("Playing swing animation: ", swing_animation)
+			animation_player.play(swing_animation)  # Play the swing animation
+			swing_timer = get_animation_duration(swing_animation)  # Set cooldown based on animation duration
+		else:
+			print("No swing animation found.")
 
 		# Ensure the pickaxe hitbox is enabled during the swing
 		var pickaxe_hit_area = $PickaxeSprite/hitbox  # Assuming hitbox is an Area2D
@@ -444,6 +417,34 @@ func perform_swing():
 					is_auto_mining = true  # Set the auto-mining flag to true
 					target_ore = ore_node  # Set the target ore for auto-mining
 					start_auto_mining()  # Start auto-mining
+
+		# Ensure the animation is connected only once and only during the swing
+		animation_player.connect("animation_finished", Callable(self, "_on_animation_finished"))
+
+	else:
+		print("⛏️ No swing animation found.")
+
+# Called when the animation is finished
+func _on_animation_finished(anim_name):
+	if anim_name == "swing_right_with_pickaxe" or anim_name == "swing_left_with_pickaxe" or anim_name == "swing_down_with_pickaxe" or anim_name == "swing_up_with_pickaxe":
+		is_swinging = false  # Reset the swing state when the animation finishes
+
+		# Stop auto-mining if the player isn't swinging anymore
+		if is_auto_mining:
+			stop_auto_mining()
+			is_auto_mining = false  # Reset the auto-mining flag
+
+		# Disconnect the animation finished signal to avoid repeated triggering
+		animation_player.disconnect("animation_finished", Callable(self, "_on_animation_finished"))
+		
+		# After the swing is finished, return to the walking animation
+		reset_to_last_direction_animation()
+
+# Helper function to get the duration of the current animation
+func get_animation_duration(animation_name: String) -> float:
+	if animation_player.has_animation(animation_name):
+		return animation_player.get_animation(animation_name).length  # Return the animation duration
+	return 1.0  # Default duration if animation is not found
 
 
 func start_auto_mining():

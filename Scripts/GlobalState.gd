@@ -333,8 +333,6 @@ func update_inventory(item_path: String, add_item: bool):
 
 	save_all_data()
 
-
-
 var mined_ores = {}  # Dictionary to track mined ores
 
 # Save the mined ore state and remove the node
@@ -343,13 +341,9 @@ func save_mined_ore(position: Vector2, ore_type: String, ore_node: Node):
 
 	# Debug: Print the current state of mined_ores before saving
 	print("🔄 Saving mined ore at position:", position_str, "with type:", ore_type)
-	print("📌 Current mined_ores before saving:", mined_ores)
 
 	# Save the ore type at the position
 	mined_ores[position_str] = ore_type
-
-	# Debug: Print the state of mined_ores after saving
-	print("📌 Current mined_ores after saving:", mined_ores)
 
 	# Save the global data persistently
 	save_all_data()  # Save the global data persistently

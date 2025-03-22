@@ -29,8 +29,8 @@ var ore_health_values := {
 
 var xp_on_hit := {
 	"copper_ore": 2,
-	"silver_ore": 3,
-	"gold_ore": 5,
+	"silver_ore": 5,
+	"gold_ore": 6,
 	"rune_ore": 7,
 	"dragon_ore": 10
 }
@@ -174,6 +174,12 @@ func _on_auto_mining_tick():
 		break_ore()  # Break the ore
 		stop_auto_mining()  # Stop the timer once the ore is broken
 		return
+		
+		# Apply XP gain for hitting the ore
+	var xp_gain = xp_on_hit.get(ore_type, 0)
+	player_stats.gain_xp("mining", xp_gain)
+	print("📌 Gained", xp_gain, "XP for breaking the ore.")
+
 
 	# Retrieve the equipped pickaxe from PlayerStats
 	var pickaxe_path = player_stats.get_equipped_item("pickaxe")

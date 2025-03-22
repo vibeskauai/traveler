@@ -1,8 +1,7 @@
-[gd_scene load_steps=11 format=3 uid="uid://dd02cojbu5whe"]
+[gd_scene load_steps=10 format=3 uid="uid://dd02cojbu5whe"]
 
 [ext_resource type="Script" uid="uid://doo80k125uy1f" path="res://Scripts/Durmil.gd" id="1_k0n3j"]
 [ext_resource type="Texture2D" uid="uid://bjw6boo46grju" path="res://Sprites/dwarfsmithmasc1.png" id="1_t6ww8"]
-[ext_resource type="Script" uid="uid://dma5gv1ee4qkt" path="res://durmiltalk.gd" id="3_yoskm"]
 
 [sub_resource type="Animation" id="Animation_t6ww8"]
 resource_name = "idle"
@@ -132,13 +131,13 @@ _data = {
 &"look_right": SubResource("Animation_yoskm")
 }
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_t6ww8"]
-size = Vector2(16, 28)
-
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_k0n3j"]
 size = Vector2(14, 22)
 
-[node name="Durmil" type="CharacterBody2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_t6ww8"]
+size = Vector2(16, 31)
+
+[node name="Durmil" type="Area2D"]
 collision_layer = 2
 script = ExtResource("1_k0n3j")
 
@@ -156,13 +155,11 @@ libraries = {
 &"": SubResource("AnimationLibrary_lrnhx")
 }
 
-[node name="InteractionArea" type="Area2D" parent="."]
-collision_mask = 2
-script = ExtResource("3_yoskm")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
-position = Vector2(0, 1)
-shape = SubResource("RectangleShape2D_t6ww8")
-
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_k0n3j")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+position = Vector2(0, 2.5)
+shape = SubResource("RectangleShape2D_t6ww8")

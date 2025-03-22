@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dwyqa07icfnq3"
-path="res://.godot/imported/character sprite sheet-4.png-8b4d4837c04b4bf0072224a45f215b97.ctex"
+uid="uid://bjw6boo46grju"
+path="res://.godot/imported/dwarfsmithmasc1.png-60c5cb05d31433f0a5d41ec28e94eabd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://character sprite sheet-4.png"
-dest_files=["res://.godot/imported/character sprite sheet-4.png-8b4d4837c04b4bf0072224a45f215b97.ctex"]
+source_file="res://Sprites/dwarfsmithmasc1.png"
+dest_files=["res://.godot/imported/dwarfsmithmasc1.png-60c5cb05d31433f0a5d41ec28e94eabd.ctex"]
 
 [params]
 

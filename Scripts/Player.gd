@@ -446,7 +446,6 @@ func get_animation_duration(animation_name: String) -> float:
 		return animation_player.get_animation(animation_name).length  # Return the animation duration
 	return 1.0  # Default duration if animation is not found
 
-
 func start_auto_mining():
 	if not target_ore:
 		print("❌ No target ore set for auto-mining!")  # Debug output

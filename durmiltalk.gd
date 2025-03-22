@@ -1,4 +1,4 @@
-extends CharacterBody2D
+extends Area2D
 
 # Signal to communicate when the NPC is clicked
 signal npc_clicked

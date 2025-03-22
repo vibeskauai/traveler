@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://t5llakwn2ehm" path="res://Scripts/Player.gd" id="1_w7yiv"]
 [ext_resource type="Script" uid="uid://b7tk25n2glo4s" path="res://Scripts/camera.gd" id="2_stqit"]
-[ext_resource type="Texture2D" uid="uid://dwyqa07icfnq3" path="res://character sprite sheet-4.png" id="2_w7yiv"]
+[ext_resource type="Texture2D" uid="uid://dwyqa07icfnq3" path="res://Sprites/character sprite sheet-4.png" id="2_w7yiv"]
 [ext_resource type="Texture2D" uid="uid://h21aclfiopn4" path="res://assets/items/Hollowed Pickaxe.png" id="3_w7yiv"]
 
 [sub_resource type="Animation" id="Animation_hptjk"]
@@ -1172,7 +1172,7 @@ collision_mask = 2
 script = ExtResource("1_w7yiv")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-z_index = 1
+z_index = 3
 texture = ExtResource("2_w7yiv")
 hframes = 4
 vframes = 12

@@ -2,7 +2,7 @@ extends Panel
 
 @onready var global_state = get_node("/root/GlobalState")
 @onready var player_stats = get_node("/root/PlayerStats")
-@onready var inventory_grid = $InventoryPanel/GridContainer
+@onready var inventory_grid = $GridContainer
 @onready var armor_panel = get_node("/root/TheCrossroads/MainUI/ArmorPanel")
 
 @onready var inventory_panel: Control = null

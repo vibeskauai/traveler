@@ -8,6 +8,8 @@ extends Area2D
 @onready var sprite = $Sprite2D
 @onready var collision = $CollisionShape2D
 
+signal picked_up
+
 var player_in_range = false
 var is_picked_up = false
 
@@ -51,4 +53,5 @@ func _process(delta):
 			print("❌ Failed to load item resource from path:", item_path)
 
 		is_picked_up = true
+		emit_signal("picked_up", item_name, item_type)
 		queue_free()

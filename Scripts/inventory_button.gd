@@ -1,7 +1,7 @@
 extends Button
 
 @onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
-@onready var inventory_button = $InventoryButton  # The button node
+@onready var inventory_button = self  # The button node
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP  # Blocks clicks from reaching the game world

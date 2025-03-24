@@ -35,7 +35,7 @@ func _ready():
 	if GlobalState.last_animation_played != "":
 		animation_player.play(GlobalState.last_animation_played)  # Play the saved animation
 	else:
-		animation_player.play("idle")  # Default to "idle" if no saved state exists
+		animation_player.play("idle_down")  # Default to "idle" if no saved state exists
 	GlobalState.load_game_data()  # ✅ Load save data on startup
 	set_global_position(GlobalState.player_position)  # ✅ Apply saved player position
 	update_pickaxe_visibility()  # ✅ Restore pickaxe visibility
@@ -69,7 +69,9 @@ func _ready():
 	# ✅ Connect signals for interactable items (e.g., pickups)
 	var items = get_tree().get_nodes_in_group("pickups")
 	for item in items:
-		item.connect("picked_up", Callable(self, "_on_item_picked_up"))
+		print(item.get_path())
+		item.picked_up.connect(_on_item_picked_up)
+		
 
 func _process(delta):
 	var direction = Vector2.ZERO  # Initialize direction
@@ -103,7 +105,8 @@ func _process(delta):
 	# Apply movement (only if not swinging)
 	if !is_swinging:
 		# Apply the movement direction and speed to the velocity
-		velocity = input_vector * speed  # Set velocity directly based on input and speed
+		#multiplying by delta make it framerate independant
+		velocity = input_vector * speed * delta * 100  # Set velocity directly based on input and speed
 
 	# Move the player
 	move_and_slide()  # No need to pass the velocity, it's handled automatically by CharacterBody2D
@@ -123,7 +126,7 @@ func _process(delta):
 
 
 # Update the player velocity while handling swinging logic
-func update_player_velocity() -> Vector2:
+func update_player_velocity(delta:float) -> Vector2:
 	if is_swinging:
 		# Prevent movement when swinging
 		return Vector2.ZERO
@@ -141,24 +144,35 @@ func update_player_velocity() -> Vector2:
 
 		# Normalize movement vector and scale by speed
 		if velocity != Vector2.ZERO:
-			velocity = velocity.normalized() * speed
+			#using delta time here helps to smooth out the movement
+			#for computers that have different framerates for the game
+			#the 100 is so the speed isn't too slow
+			velocity = velocity.normalized() * delta * 100 * speed
 		
 		return velocity
 
 # Handle movement animation when not swinging
+var last_move_dir = "_down"
 func update_movement_animation():
 	var current_direction = ""
 	if Input.is_action_pressed("walk_right"):
 		current_direction = "walk_right"
+		last_move_dir = "_right"
 	elif Input.is_action_pressed("walk_left"):
 		current_direction = "walk_left"
+		last_move_dir = "_left"
 	elif Input.is_action_pressed("walk_down"):
 		current_direction = "walk_down"
+		last_move_dir = "_down"
 	elif Input.is_action_pressed("walk_up"):
 		current_direction = "walk_up"
+		last_move_dir = "_up"
+	else:
+		current_direction = "idle" + last_move_dir
+	
 
 	# Only play walking animations when the pickaxe is equipped
-	if "pickaxe" in GlobalState.equipped_items:
+	if GlobalState.equipped_items["pickaxe"] != "":
 		animation_player.play(current_direction + "_with_pickaxe")
 	else:
 		animation_player.play(current_direction)

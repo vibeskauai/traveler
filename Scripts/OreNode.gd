@@ -3,7 +3,7 @@ extends StaticBody2D  # Keeps ore solid and interactable
 @onready var player = get_tree().get_first_node_in_group("player")  # Get the player node
 @onready var player_stats = get_node("/root/PlayerStats")  # Reference to PlayerStats
 @onready var global_state = get_node("/root/GlobalState")  # Reference to GlobalState
-@onready var inventory_panel = get_node("/root/MainUI/InventoryPanel")  # Reference to Inventory UI panel
+@onready var inventory_panel = get_node("/root/TheCrossroads/MainUI/InventoryPanel")  # Reference to Inventory UI panel
 @onready var sprite := $Sprite2D  # Ore sprite
 @onready var hitbox := $Hitbox as Area2D  # Detects swings
 @onready var hit_sound = $HitSound if has_node("HitSound") else null  # Reference to Hit Sound

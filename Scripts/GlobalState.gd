@@ -3,7 +3,7 @@ extends Node
 @onready var player = get_tree().get_first_node_in_group("player")
 @onready var inventory_panel = get_tree().get_first_node_in_group("inventory_panel")  # ✅ Uses group instead of fixed path
 @onready var player_stats = get_node("/root/PlayerStats")  # Access PlayerStats for syncing equipped items
-var last_animation_played: String = "idle"  # Default to "idle" if nothing is set
+var last_animation_played: String = "idle_down"  # Default to "idle" if nothing is set
 
 signal new_game_started(new_position: Vector2)
 var is_game_loaded: bool = false

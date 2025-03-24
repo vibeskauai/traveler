@@ -16,11 +16,11 @@ item_name = "Hollowed Pickaxe"
 item_texture = ExtResource("1_jmnbd")
 item_path = "res://assets/items/hollowed_pickaxe.tres"
 
-[node name="Sprite2D" type="Sprite2D" parent="." groups=["pickups"]]
+[node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.68, 0.68)
 texture = ExtResource("1_jmnbd")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." groups=["pickups"]]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0.5, 0.5)
 shape = SubResource("RectangleShape2D_jmnbd")
 

@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-var speed = 65  # Walking speed
+var speed = 40  # Walking speed
 var swing_cooldown = 0.5  # Cooldown time for swing in seconds
 var swing_timer = 0.3  # Timer to track cooldown for swing animation
 
@@ -71,7 +71,7 @@ func _ready():
 	for item in items:
 		print(item.get_path())
 		item.picked_up.connect(_on_item_picked_up)
-		
+
 
 func _process(delta):
 	var direction = Vector2.ZERO  # Initialize direction
@@ -87,6 +87,8 @@ func _process(delta):
 		if distance > 50:  # Stop auto-mining if player is too far from the ore
 			print("❌ Player walked away from ore, stopping auto-mining.")
 			stop_auto_mining()
+		else:
+			pass
 
 	# Handle movement input
 	var input_vector: Vector2 = Vector2(
@@ -416,6 +418,7 @@ func perform_swing():
 				print("⛏️ Area found:", area.name)  # Debug output
 				if area.is_in_group("ores"):  # Ensure that we're detecting ore nodes
 					ore_node = area.get_parent()  # Get the parent node (OreNode)
+					ore_node.ore_mined.connect(_ore_mined)
 					print("⛏️ Ore node detected:", ore_node.ore_type)  # Debug output (Checking ore_type)
 					break  # Stop the loop once the ore is found
 
@@ -431,9 +434,12 @@ func perform_swing():
 					is_auto_mining = true  # Set the auto-mining flag to true
 					target_ore = ore_node  # Set the target ore for auto-mining
 					start_auto_mining()  # Start auto-mining
+			elif !ore_node && is_auto_mining:
+				stop_auto_mining()
+				reset_to_last_direction_animation()
 
 		# Ensure the animation is connected only once and only during the swing
-		animation_player.connect("animation_finished", Callable(self, "_on_animation_finished"))
+		#animation_player.connect("animation_finished", Callable(self, "_on_animation_finished"))
 
 	else:
 		print("⛏️ No swing animation found.")
@@ -447,6 +453,7 @@ func _on_animation_finished(anim_name):
 		if is_auto_mining:
 			stop_auto_mining()
 			is_auto_mining = false  # Reset the auto-mining flag
+			$AutoMiningTimer.stop()
 
 		# Disconnect the animation finished signal to avoid repeated triggering
 		animation_player.disconnect("animation_finished", Callable(self, "_on_animation_finished"))
@@ -464,12 +471,13 @@ func start_auto_mining():
 	if not target_ore:
 		print("❌ No target ore set for auto-mining!")  # Debug output
 		return  # Ensure we have a target ore to mine
-
 	is_mining = true
+	$AutoMiningTimer.wait_time = get_animation_duration(animation_player.current_animation)
 	print("⛏️ Auto-mining started on", target_ore.ore_type)  # Debug output
 
 	# Start the mining loop immediately (now in OreNode.gd)
-	target_ore.start_auto_mining()  # This will now handle the mining in OreNode.gd
+	target_ore.start_mining()  # This will now handle the mining in OreNode.gd
+	$AutoMiningTimer.start()
 
 
 func stop_auto_mining():
@@ -480,3 +488,25 @@ func stop_auto_mining():
 	is_auto_mining = false
 	target_ore = null  # Clear the target ore
 	is_mining = false  # Set mining flag to false
+
+
+func _on_auto_mining_timer_timeout() -> void:
+	if(is_auto_mining):
+		animation_player.seek(0)
+		animation_player.play()
+		var ore_node = null
+		var collided_areas = $PickaxeSprite/hitbox.get_overlapping_bodies()
+		var ore_found =  false
+		for area in collided_areas:
+					if area.is_in_group("ores"): 
+						ore_found = true
+		if(ore_found):
+			target_ore.start_mining()
+			$AutoMiningTimer.start()
+
+func _ore_mined():
+	$AutoMiningTimer.stop()
+	stop_auto_mining()
+	reset_to_last_direction_animation()
+	is_auto_mining = false
+	target_ore = null

@@ -18,6 +18,9 @@ var is_auto_mining: bool = false
 var is_manual_mining: bool = false  # Track if the player is manually mining
 var auto_mining_timer: Timer = null
 
+signal ore_mined
+
+
 # Ore dictionaries for XP, health, drop amount, etc.
 var ore_health_values := {
 	"copper_ore": 10,
@@ -63,12 +66,12 @@ var pickaxe_damage_values := {
 
 # Called when the ore is ready (initialize ore health and load texture)
 func _ready():
-	# Initialize the timer for auto-mining
-	auto_mining_timer = Timer.new()  # Create a new timer
-	auto_mining_timer.wait_time = 1  # Set the timer interval to 1 second (adjustable)
-	auto_mining_timer.connect("timeout", Callable(self, "_on_auto_mining_tick"))  # Connect the timer to the tick function
-	add_child(auto_mining_timer)  # Add the timer as a child node of this ore node
-	auto_mining_timer.stop()  # Initially stop the timer until auto-mining starts
+	## Initialize the timer for auto-mining
+	#auto_mining_timer = Timer.new()  # Create a new timer
+	#auto_mining_timer.wait_time = 1  # Set the timer interval to 1 second (adjustable)
+	#auto_mining_timer.connect("timeout", Callable(self, "_on_auto_mining_tick"))  # Connect the timer to the tick function
+	#add_child(auto_mining_timer)  # Add the timer as a child node of this ore node
+	#auto_mining_timer.stop()  # Initially stop the timer until auto-mining starts
 
 	# Derive ore type from the node's scene name (e.g., CopperNode -> copper_ore)
 	ore_type = self.ore_type.to_lower() + "_ore"
@@ -91,13 +94,13 @@ func _ready():
 	# Ensure visibility if ore is still present
 	sprite.visible = true
 
-func _process(delta):
-	if is_auto_mining and player.position.distance_to(global_position) < 50:  # Distance threshold
-		start_auto_mining()
+#func _process(delta):
+	#if is_auto_mining and player.position.distance_to(global_position) < 50:  # Distance threshold
+		#start_auto_mining()
 
 # Detect when the player swings the pickaxe and hits the ore
 func _on_hit(area):
-	if area == $PickaxeSprite/hitbox:  # Ensure the pickaxe hitbox is the one being hit
+	if area == player.get_node("PickaxeSprite/hitbox"): # Ensure the pickaxe hitbox is the one being hit
 		print("⛏️ Ore detected during swing:", ore_type)  # Debug output
 
 		# Start auto-mining if the auto-mine flag is true
@@ -132,6 +135,7 @@ func start_mining():
 
 	# Check if ore is destroyed and break it, otherwise continue mining
 	if ore_health <= 0:
+		emit_signal("ore_mined")
 		break_ore()
 	else:
 		print("Ore health is not yet 0, continue mining.")
@@ -157,7 +161,17 @@ func start_auto_mining():
 
 	print("⛏️ Starting auto-mining on", ore_type)  # Debug output
 	is_auto_mining = true
-	auto_mining_timer.start()  # Start the timer for auto-mining
+	if ore_health <= 0:
+		print("🪨 Ore health is 0, breaking ore.")  # Debug output
+		break_ore()  # Break the ore
+		stop_auto_mining()  # Stop the timer once the ore is broken
+		emit_signal("ore_mined")
+		return
+		
+		# Apply XP gain for hitting the ore
+	var xp_gain = xp_on_hit.get(ore_type, 0)
+	player_stats.gain_xp("mining", xp_gain)
+	print("📌 Gained", xp_gain, "XP for breaking the ore.")
 
 
 func stop_auto_mining():
@@ -168,17 +182,17 @@ func stop_auto_mining():
 	is_auto_mining = false
 	auto_mining_timer.stop()  # Stop the auto-mining timer
 
-func _on_auto_mining_tick():
-	if ore_health <= 0:
-		print("🪨 Ore health is 0, breaking ore.")  # Debug output
-		break_ore()  # Break the ore
-		stop_auto_mining()  # Stop the timer once the ore is broken
-		return
-		
-		# Apply XP gain for hitting the ore
-	var xp_gain = xp_on_hit.get(ore_type, 0)
-	player_stats.gain_xp("mining", xp_gain)
-	print("📌 Gained", xp_gain, "XP for breaking the ore.")
+#func _on_auto_mining_tick():
+	#if ore_health <= 0:
+		#print("🪨 Ore health is 0, breaking ore.")  # Debug output
+		#break_ore()  # Break the ore
+		#stop_auto_mining()  # Stop the timer once the ore is broken
+		#return
+		#
+		## Apply XP gain for hitting the ore
+	#var xp_gain = xp_on_hit.get(ore_type, 0)
+	#player_stats.gain_xp("mining", xp_gain)
+	#print("📌 Gained", xp_gain, "XP for breaking the ore.")
 
 
 	# Retrieve the equipped pickaxe from PlayerStats
@@ -206,7 +220,6 @@ func _on_auto_mining_tick():
 func break_ore():
 	if ore_health > 0:
 		return
-
 	print("🪨 Ore destroyed!")
 
 	var drop_range = drop_amounts.get(ore_type, [1, 1])

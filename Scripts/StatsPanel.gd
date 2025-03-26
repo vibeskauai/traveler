@@ -18,6 +18,9 @@ extends Panel
 @onready var herbalism_levelup_sound: AudioStreamPlayer2D = $HerbalismLevelUpSound
 @onready var combat_levelup_sound: AudioStreamPlayer2D = $CombatLevelUpSound
 
+signal xp_updated
+signal level_up
+
 func _ready():
 	# Ensure game data is loaded
 	GlobalState.load_game_data()
